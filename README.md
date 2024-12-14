@@ -41,7 +41,10 @@ We pull the relevant news from tagesschau api and the generate news update from 
 The we also can get user feedback. 
 
 ### right account (Volksstimme)
+Ein Volk, Eine Wahrhiet, Eine Zeitung
 
 ### left account (Der Aufbruch)
+Für ein neues Zeitalter der Gerechtigkeit
 
 ### neutral (Klartext)
+Der unabhängige Blick
