@@ -10,7 +10,7 @@ Q&A with both left, neutral and right questions. Slider impacts prompt
 ### 3 model scenarion:
 One right, left and neutral model trained with data
 
-huggingface basemodel without constraints 
+huggingface basemodel without constraints
 ## Backend:
 
 Feedback from User for further training.
@@ -48,3 +48,6 @@ Für ein neues Zeitalter der Gerechtigkeit
 
 ### neutral (Klartext)
 Der unabhängige Blick
+
+### government-aligned (Der Kritische Beobachter)
+Für unabhängigen Journalismus 
