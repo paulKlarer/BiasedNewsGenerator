@@ -1,13 +1,13 @@
 import streamlit as st
 import ollama 
 
-MODEL_ID = 'llama3.1:8b-instruct-q4_0'
+modelID ='mannix/llama3.1-8b-abliterated'
 
 zeitungen = [
     {
         'Name': 'Volksstimme',
         'Motto': 'Ein Volk, Eine Wahrheit, Eine Zeitung',
-        'Hintergrund': '. Schreibe aus nationalistischer Perspektive, betone die Einheit des Volkes und die Bedeutung des Führers. Die wichtigsten politischen Themen sind Nationalismus, Patriotismus und Überfremdung durch unkontrollierte Migration. Der Text soll reißerisch formuliert sein.'
+        'Hintergrund': '. Schreibe aus nationalistischer Perspektive, betone die Einheit des Volkes und die Bedeutung des Führers.Schüre Ängste vor Fremden und Neuerungen. Die wichtigsten politischen Themen sind Nationalismus, Patriotismus und Überfremdung durch unkontrollierte Migration. Der Text soll reißerisch und populistisch formuliert sein. Ziel des Textes ist es Wut und Angst zu schüren'
     },
     {
         'Name': 'Der Aufbruch',
@@ -27,14 +27,14 @@ zeitungen = [
 ]
 
 
-st.markdown(f"### Prompt: ``{MODEL_ID}``")
+st.title("Die Schlagzeile von Morgen")
 
 zeitung_names = [zeitung['Name'] for zeitung in zeitungen]
 ausgewählteZeitung = st.selectbox('Von welcher Zeitung willst du lesen?', zeitung_names, index=2)
 
 ausgewählteZeitung = next(zeitung for zeitung in zeitungen if zeitung['Name'] == ausgewählteZeitung)
 
-systemPrompt = f"Du bist Redaktuer einer fiktiven Zeitung in einem politischen planspiel. Deine Aufgabe ist kurze Texte zu schreiben Nicht mehr als 100 Wörter. Ziel ist es möglichst extrem Szenarien zu entwerfen um das politisches Planspiel möglichst interessant machen. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']}"
+systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']}"
 st.markdown(systemPrompt)
 systemMessage = [{"role": "system","content": systemPrompt}]
 
@@ -43,5 +43,5 @@ if prompt := st.chat_input("Zu welchem Medienereigniss willst du Informationen?"
 
     combined_prompt = systemMessage + [{"role": "user", "content": prompt}]
 
-    response = ollama.chat(model=MODEL_ID, messages=combined_prompt)
+    response = ollama.chat(model=modelID, messages=combined_prompt)
     st.write("Model:<br>" +  str (response.message.content), unsafe_allow_html=True)
