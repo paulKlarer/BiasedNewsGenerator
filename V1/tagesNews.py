@@ -17,7 +17,7 @@ def getHomepage():
                 "content": content_value
             }
             parsed_news.append(filtered_item)
-        with open('V1/homepage.json', 'w', encoding='utf-8') as file:
+        with open('data/homepage.json', 'w', encoding='utf-8') as file:
             json.dump(parsed_news, file, indent=4, ensure_ascii=False)
     except requests.exceptions.RequestException as e:
         print(f"Error fetching homepage: {e}")        

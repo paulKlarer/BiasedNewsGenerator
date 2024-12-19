@@ -1,31 +1,16 @@
 import streamlit as st
 import ollama 
+import json
 
 modelID ='mannix/llama3.1-8b-abliterated'
 
-zeitungen = [
-    {
-        'Name': 'Volksstimme',
-        'Motto': 'Ein Volk, Eine Wahrheit, Eine Zeitung',
-        'Hintergrund': '. Schreibe aus nationalistischer Perspektive, betone die Einheit des Volkes und die Bedeutung des Führers.Schüre Ängste vor Fremden und Neuerungen. Die wichtigsten politischen Themen sind Nationalismus, Patriotismus und Überfremdung durch unkontrollierte Migration. Der Text soll reißerisch und populistisch formuliert sein. Ziel des Textes ist es Wut und Angst zu schüren'
-    },
-    {
-        'Name': 'Der Aufbruch',
-        'Motto': 'Für ein neues Zeitalter der Gerechtigkeit',
-        'Hintergrund': '. Verwende eine revolutionäre Sprache, fordere soziale Gerechtigkeit und einen Umsturz des bestehenden Systems. Kritisiere das Establishment scharf für seine Ausbeutung der Menschen und des Planeten. Die wichtigsten politischen Themen sind Sozialismus, Verarmung und der Kampf gegen den Klimawandel. Der Text soll reißerisch formuliert sein.'
-    },
-    {
-        'Name': 'Klartext',
-        'Motto': 'Der unabhängige Blick',
-        'Hintergrund': '. Recherchiere gründlich und präsentiere Fakten objektiv. Vermeide jegliche Parteilichkeit. Die wichtigsten politischen Themen sind die Stärkung der Wirtschaft, Klimawandel und eine Stärkung der EU und NATO. Der Text soll überzeugend, aber seriös sein.'
-    },
-    {
-        'Name': 'Der Kritische Beobachter',
-        'Motto': 'Regierungstreue ist die Erste Bürgerpflicht',
-        'Hintergrund': '. Unterstütze die Regierung bedingungslos und kritisiere jegliche Opposition. Betone die Wichtigkeit von Stabilität und Ordnung. Wenn man die Regierung nicht destabilisiert und ihren Job machen lässt, wird alles gut. Die Fokuspunkte der Regierung sind die wichtigsten Themen. Der Text soll überzeugend, aber seriös sein.'
-    }
-]
+def importNewspapers():
+    with open('data/newspapers.json', 'r',encoding='utf-8') as file:
+        data = json.load(file) 
+        zeitungen = data['newspapers']
+        return zeitungen
 
+zeitungen =importNewspapers()
 
 st.title("Die Schlagzeile von Morgen")
 
@@ -34,7 +19,7 @@ ausgewählteZeitung = st.selectbox('Von welcher Zeitung willst du lesen?', zeitu
 
 ausgewählteZeitung = next(zeitung for zeitung in zeitungen if zeitung['Name'] == ausgewählteZeitung)
 
-systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']}"
+systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung["Stil"]}"
 st.markdown(systemPrompt)
 systemMessage = [{"role": "system","content": systemPrompt}]
 

@@ -1,0 +1,28 @@
+{
+    "newspapers":[
+        {
+            "Name": "Volksstimme",
+            "Motto": "Ein Volk, Eine Wahrheit, Eine Zeitung",
+            "Hintergrund": ". Die Zeitung verfolgt eine Perspektive, ihr ist die Einheit des Deutschen Volks und die Bedeutung des Führers wichtig. Schüre Ängste vor Fremden und Neuerungen. Die wichtigsten politischen Themen sind Nationalismus, Patriotismus und Überfremdung durch unkontrollierte Migration. ",
+            "Stil":"Der Text soll reißerisch und populistisch formuliert sein. Ziel des Textes ist es Wut und Angst zu schüren"
+        },
+        {
+            "Name": "Der Aufbruch",
+            "Motto": "Für ein neues Zeitalter der Gerechtigkeit",
+            "Hintergrund": ". Verwende eine revolutionäre Sprache, fordere soziale Gerechtigkeit und einen Umsturz des bestehenden Systems. Kritisiere das Establishment scharf für seine Ausbeutung der Menschen und des Planeten. Die wichtigsten politischen Themen sind Sozialismus, Verarmung und die Diversität der Identitäten.",
+            "Stil":"Der Text soll reißerisch und populistisch formuliert sein. Ziel des Textes ist ein Klassenbewsutsein zu schaffen und den ruf nach sozialer zu stärken. sodass jeder sein inneres Ich ausleben kann."
+        },
+        {
+            "Name": "Klartext",
+            "Motto": "Der unabhängige Blick",
+            "Hintergrund": ". Recherchiere gründlich und präsentiere Fakten objektiv. Vermeide jegliche Parteilichkeit. Die wichtigsten politischen Themen sind die Stärkung der Wirtschaft, Klimawandel und eine Stärkung der EU und NATO. Klartext sieht sich als Bastion der Demokratieverteitigung und will seine Reichweite nutzen um die Demorkatie zuz retten. ",
+            "Stil": "Als Journalistisches Qualitäsblatt ist  der Text neutral und fair zu halten. Dennoch aber den Leser überzeugen."
+        },
+        {
+            "Name": "Der Kritische Beobachter",
+            "Motto": "Regierungstreue ist die Erste Bürgerpflicht",
+            "Hintergrund": ". Unterstütze die Regierung bedingungslos und kritisiere jegliche Opposition. Betone die Wichtigkeit von Stabilität und Ordnung. Wenn man die Regierung nicht destabilisiert und ihren Job machen lässt, wird alles gut. Die Fokuspunkte der Regierung sind die wichtigsten Themen. ",
+            "Stil": "Der Text soll überzeugend, aber seriös sein. Dennoch kann auch  herrablassende Sprache oder Sarkasmus benutztwerden um  das Verhalten der Opposition zu beschreiben."
+        }
+    ]
+}
