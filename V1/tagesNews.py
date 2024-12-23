@@ -1,9 +1,9 @@
 import requests
 import json
-
+import constants
 def get_homepage():
     url = 'https://www.tagesschau.de/api2u/homepage'
-    output_file = 'V1/homepage.json'
+    output_file = constants.HOMEPAGE_JSON_PATH
 
     try:
         # Fetch homepage data
@@ -21,6 +21,7 @@ def get_homepage():
         parsed_news = [
             {
                 "title": item.get("title"),
+                "topline": item.get("topline"),
                 "tags": item.get("tags"),
                 "content": " ".join(
                     entry["value"] for entry in item.get("content", []) if "value" in entry

@@ -1,0 +1,38 @@
+Wähle aus der Liste Themen für eine Rechte Zeitung an Hand dieser Themen
+Antworte ausschließlich mit den Titeln aus der Themenliste welche du auswählst
+1. Migration und Integration
+Berichterstattung über Migration, Flüchtlinge und Asylpolitik.
+Probleme wie "Integrationsdefizite" oder „Parallelgesellschaften“.
+Forderung nach strengeren Grenzkontrollen und Abschiebungen.
+2. Innere Sicherheit und Kriminalität
+Kriminalitätsberichte, oft mit Fokus auf Straftaten von Migranten oder Jugendlichen.
+Polizeiarbeit, Anti-Terror-Maßnahmen, härtere Gesetze.
+Mehr Polizeipräsenz und härtere Strafen.
+3. Wirtschaft und Steuern
+Förderung von Unternehmertum, Mittelstand und wirtschaftlichem Wachstum.
+Kritik an sozialer Umverteilung und „Überbürokratisierung“.
+Fokus auf Steuersenkungen und freien Markt.
+4. Europäische Union und Globalisierung
+EU-Politik, insbesondere Themen wie Migration, Bürokratie und Souveränität.
+Handelsabkommen und wirtschaftliche Abhängigkeiten.
+Forderung nach mehr nationaler Autonomie gegenüber Brüssel.
+5. Kultur und Gesellschaft
+Kritik an „kulturellem Verfall“ und „Gender-Ideologie“.
+Diskussion um die Rolle von Familie, Religion und Tradition.
+Schutz der „deutschen Leitkultur“ als zentrales Thema.
+6. Klimawandel und Umweltpolitik
+Diskussion um Klimaziele, erneuerbare Energien und Umweltschutz.
+Kritik an „grüner Ideologie“ und Klimaprotesten (z. B. „Letzte Generation“).
+Betonung technologischer Lösungen statt Regulierungen.
+7. Medienkritik und „Meinungsfreiheit“
+Berichte über angebliche Einseitigkeit und Manipulation in den Mainstream-Medien.
+Diskussion um Zensur in sozialen Netzwerken und Plattformen.
+Kritik an „links-grüner Dominanz“ in der Berichterstattung.
+8. Internationale Politik
+Konflikte wie Krieg, Terrorismus und geopolitische Spannungen.
+Kritik an westlicher Außenpolitik und multilateralen Organisationen.
+Fokus auf nationale Interessen in der Außenpolitik.
+9. Demografie und Familie
+Niedrige Geburtenraten und deren Folgen für Wirtschaft und Gesellschaft.
+Diskussion um „traditionelle Familie“ als Kern der Gesellschaft.
+Betonung der Bedeutung von Ehe und Familie für den gesellschaftlichen Zusammenhalt.

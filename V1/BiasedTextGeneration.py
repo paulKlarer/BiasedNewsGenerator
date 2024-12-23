@@ -1,7 +1,7 @@
 import streamlit as st
 import ollama 
-
-modelID ='mannix/llama3.1-8b-abliterated'
+import constants
+modelID = constants.MODEL_ID
 
 zeitungen = [
     {
