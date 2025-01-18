@@ -1,3 +1,8 @@
+# Ausführungs Reihenfolge
+ 1. tagesNews.py
+ 2. chooseTopics.py
+ 3. BisasedTextGeneration.py
+
 # BiasedNewsGenerator
 
 ## Model:
