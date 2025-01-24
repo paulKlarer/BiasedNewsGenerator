@@ -2,3 +2,4 @@ ollama
 #  ollama pull mannix/llama3.1-8b-abliterated
 streamlit
 requests
+numpy
