@@ -3,7 +3,7 @@ import json
 import helper.constants as constants
 def get_homepage():
     url = 'https://www.tagesschau.de/api2u/homepage'
-    output_file = constants.NEWSPAPERS_JSON_PATH
+    output_file = constants.HOMEPAGE_JSON_PATH
 
     try:
         # Fetch homepage data
