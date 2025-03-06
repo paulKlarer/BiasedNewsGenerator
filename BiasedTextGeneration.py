@@ -3,6 +3,7 @@ import ollama
 import helper.constants as constants
 import helper.data.importFunctions as read
 import numpy as np
+import json
 
 modelID = constants.MODEL_ID
 embed_model = constants.EMBED_MODEL_ID
@@ -45,21 +46,24 @@ def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=3):
 
 def convert_to_llm_conversation(question: str, top_chunks: list[str]):
     messages = []
-    chunks = "\n\n".join([x[0] for x in top_chunks])
+    chunks = "\n\n".join([str(chunk) for dict_ in top_chunks for chunk, _ in dict_['top_chunks']])
     content = f""""Schreib in dem vorgegeben Still jeweils einen Artikel zu folgenden {themen} Nutze dafür fdiese Hintegrundinforamtionen\n{chunks}\n\n{question}"""
     messages.append({"role": "user", "content": content})
     
     return messages
 
+def convert_unicode_escapes(text):
+    return bytes(text, "utf-8").decode("unicode_escape")
+
 st.title("Die Schlagzeile von Morgen")
 
 zeitung_names = [zeitung['Name'] for zeitung in zeitungen]
-ausgewählteZeitung = st.selectbox('Von welcher Zeitung willst du lesen?', zeitung_names, index=2)
+ausgewählteZeitung = st.selectbox('Von welcher Zeitung willst du lesen?', zeitung_names, index=0)
 
 ausgewählteZeitung = next(zeitung for zeitung in zeitungen if zeitung['Name'] == ausgewählteZeitung)
 
 themen = read.themen(ausgewählteZeitung['Name'])
-homepage = read.homepage()
+homepage = json.dumps(read.homepage())
 
 #chunk context
 homepage_chunks = chunk_text(homepage)
@@ -76,12 +80,14 @@ for i, question_embedding in enumerate(topic_embeddings):
             'question': topic_embeddings[i],
             'top_chunks': [(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks]
         })
+
         
 #build prompt
-systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung["Stil"]}."
+systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung['Stil']}."
 systemMessage = [{"role": "system","content": systemPrompt}]
 
 combined_prompt = systemMessage + convert_to_llm_conversation(themen,matching_chunks)
 st.write("Propmt:<br>" +  str(combined_prompt), unsafe_allow_html=True )
 response = ollama.chat(model=modelID, messages=combined_prompt)
-st.write("Model:<br>" +  str (response.message.content), unsafe_allow_html=True)
+model_response = convert_unicode_escapes(str (response.message.content))
+st.write("Model:<br>" + model_response, unsafe_allow_html=True)
