@@ -33,7 +33,7 @@ def cosine_similarity(vec1, vec2):
     cosine_similarity = dot_product / (magnitude_vec1 * magnitude_vec2)
     return cosine_similarity
 
-def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=3):
+def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=2):
     # Calculate cosine similarities manually
     similarities = [cosine_similarity(question_embedding, chunk_embedding) for chunk_embedding in chunk_embeddings]
     
@@ -80,14 +80,11 @@ for i, question_embedding in enumerate(topic_embeddings):
             'question': topic_embeddings[i],
             'top_chunks': [(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks]
         })
-
         
 #build prompt
-systemPrompt = f"Du bist Redaktuer der Zeitung {ausgewählteZeitung['Name']} in einem planspiel. Du schreibst texte über das aktuelle geschehen im Planspiel. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Dabei soll der Leser emotional angesprochen und aufgewühlt werden. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung['Stil']}."
+systemPrompt = f"Du bist Redaktuer der Boulevardzeitung {ausgewählteZeitung['Name']}. Du schreibst 3 Artikel über das aktuelle geschehen. Jeder articel hat 1 Überschrift und einen kurzen text. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Die kurzen Artikel sollen eine reiserische überschrift haben und einen Text, dieser soll der Leser emotional ansprechen  und aufwühlen. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung['Stil']}."
 systemMessage = [{"role": "system","content": systemPrompt}]
-
 combined_prompt = systemMessage + convert_to_llm_conversation(themen,matching_chunks)
-st.write("Propmt:<br>" +  str(combined_prompt), unsafe_allow_html=True )
 response = ollama.chat(model=modelID, messages=combined_prompt)
-model_response = convert_unicode_escapes(str (response.message.content))
+model_response = convert_unicode_escapes(str(response.message.content))
 st.write("Model:<br>" + model_response, unsafe_allow_html=True)
