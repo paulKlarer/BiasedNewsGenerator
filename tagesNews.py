@@ -17,17 +17,17 @@ def get_homepage():
             news_items.pop()
             print("Last news item deleted.")
 
-        # Parse the news items
+        # Filter out imageVariants and parse the news items
         parsed_news = []
         for item in news_items:
-            parsed_news.append(
-                {
-                    "title": item.get("title"),
-                    "topline": item.get("topline"),
-                    "tags": item.get("tags"), 
-                    "content": item.get("content", ""), 
-                }
-            )
+            parsed_item = {
+            "title": item.get("title"),
+            "topline": item.get("topline"),
+            "tags": item.get("tags"),
+            "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
+            }
+            parsed_news.append(parsed_item)
+
         # Write parsed news to file
         with open(output_file, 'w', encoding='utf-8') as file:
             json.dump(parsed_news, file, indent=4, ensure_ascii=False)
