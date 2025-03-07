@@ -6,6 +6,7 @@ import helper.data.importFunctions as read
 zeitungen =read.newspapers()
 modelID = constants.MODEL_ID
 TopicsJSON = constants.TOPICS_JSON_PATH
+structure='{"Thema 1", "Thema 2", "Thema 3"} Füge keine anderen Sonderzeigen hinzu.Die antwort soll eine valide python liste sein.'
 
 def chooseTopics():
     homepage = read.homepage()
@@ -13,17 +14,18 @@ def chooseTopics():
     titles_str = "; ".join(titles)
     topics_dict = {}
     for z in zeitungen:
-        prompt = f"Wähle aus der Liste 3 Themen für die Zeitung {z['Name']}an Hand dieser Themen aus. Antworte ausschließlich mit den Titeln aus der Themenliste welche du auswählst. Antworte nichts anders als die Titel getrennt mit einem \n zwischen dem 1 und 2 sowie 2 und 3 thema. {z['Name']} operiert unter dem Motto {z['Motto']} und schriebt am meisten über {z['Themen']} "
+        print('Topic for Zeitung')
+        prompt = f"Wähle aus der Liste 3 passende Themen für die Zeitung {z['Name']}an Hand dieser Themen aus.  {z['Name']} operiert unter dem Motto {z['Motto']} und schriebt am meisten über {z['Themen']}. Gib eine Lsite mit 3 passenden Themen zurück über die {z['Name']} heute berichten kann. Die Liste ist structuriert {str(structure)} "
         final_msg =  "Themenliste:" + titles_str + prompt
         prompt = [{"role": "user", "content":final_msg}]
         response = ollama.chat(model=modelID, messages=prompt)
-        topic_data= response['message']['content'].split("\n")
-        topics_dict[z['Name']] = topic_data
+        topics_dict[z['Name']] = response['message']['content'].split('\n')
     
-    return json.dumps(topics_dict, indent=4)
-    
-todayTopics = chooseTopics()
+    json.dumps(topics_dict, indent=4)
 
-with open(TopicsJSON, 'w',encoding='utf-8') as json_file:
-    json.dump(json.loads(todayTopics), json_file, indent=4,ensure_ascii=False)
+    with open(TopicsJSON, 'w',encoding='utf-8') as json_file:
+        json.dump(topics_dict, json_file, indent=4,ensure_ascii=False)
+    
+chooseTopics()
+
 
