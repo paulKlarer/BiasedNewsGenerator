@@ -80,7 +80,7 @@ for topic in themen:
     topic_embedding = ollama.embed(model=embed_model, input=[topic])["embeddings"][ 0]
 
     top_n_chunks = find_top_n_chunks(topic_embedding, chunk_embeddings)
-    matching_chunks = convert_unicode_escapes([(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks])
+    matching_chunks = [(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks]
 
     topic_conversation = convert_to_llm_conversation(topic, matching_chunks)
     combined_prompt = systemMessage + topic_conversation
