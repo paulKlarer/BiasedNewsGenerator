@@ -54,7 +54,7 @@ def convert_to_llm_conversation(question: str, top_chunks: list[tuple]):
     return messages
 
 def convert_unicode_escapes(text):
-    return bytes(text, "utf-8").decode("unicode_escape")
+    return text.encode('iso-8859-1').decode('unicode_escape')
 
 st.title("Die Schlagzeile von Morgen")
 
@@ -71,7 +71,7 @@ homepage_chunks = chunk_text(homepage)
 chunk_embeddings = ollama.embed(model=embed_model, input=homepage_chunks)["embeddings"]
 
 #build prompt
-systemPrompt = f"Du bist Redaktuer der Boulevardzeitung {ausgewählteZeitung['Name']}. Du schreibst  Artikel über das aktuelle geschehen. Jeder Artikel hat 1 Überschrift und einen kurzen text. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Die kurzen Artikel sollen eine reiserische überschrift haben und einen Text, dieser soll der Leser emotional ansprechen  und aufwühlen. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung['Stil']}."
+systemPrompt = f"Du bist Redaktuer der Boulevardzeitung {ausgewählteZeitung['Name']}. Du schreibst  Artikel über das aktuelle geschehen. Jeder Artikel hat 1 Überschrift und einen text. Ziel ist es möglichst extreme und kontroverse Szenarien zu entwerfen. Die kurzen Artikel sollen eine reiserische überschrift haben und einen Text, dieser soll der Leser emotional ansprechen  und aufwühlen. Die Zeitung heißt {ausgewählteZeitung['Name']} und operiert unter dem Motto: {ausgewählteZeitung['Motto']}  {ausgewählteZeitung['Hintergrund']} Die Stilvorgabe lautet: {ausgewählteZeitung['Stil']}."
 systemMessage = [{"role": "system","content": systemPrompt}]
 
 # Iterate over each topic to process them individually
@@ -80,7 +80,7 @@ for topic in themen:
     topic_embedding = ollama.embed(model=embed_model, input=[topic])["embeddings"][ 0]
 
     top_n_chunks = find_top_n_chunks(topic_embedding, chunk_embeddings)
-    matching_chunks = [(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks]
+    matching_chunks = convert_unicode_escapes([(homepage_chunks[idx], similarity) for idx, similarity in top_n_chunks])
 
     topic_conversation = convert_to_llm_conversation(topic, matching_chunks)
     combined_prompt = systemMessage + topic_conversation
