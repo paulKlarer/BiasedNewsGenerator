@@ -11,6 +11,7 @@ transformers = "*"
 wandb = "*"
 unsloth = "*"
 torch = "==2.0.1"
+bitsandbytes = "*"
 
 [dev-packages]
 
