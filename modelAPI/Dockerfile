@@ -13,7 +13,7 @@
 
 # CMD ["pipenv", "run", "prod"]
 # Use an NVIDIA CUDA runtime base image with Ubuntu
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.1-devel-ubuntu22.04
 
 
 # Install Python 3.11 and other required system packages
