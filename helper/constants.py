@@ -3,3 +3,4 @@ EMBED_MODEL_ID='nomic-embed-text:latest'
 HOMEPAGE_JSON_PATH="data/homepage.json"
 NEWSPAPERS_JSON_PATH="data/newspapers.json"
 TOPICS_JSON_PATH="data/todaysTopics.json"
+TIMESTAMP_PATH="helper/timestamp.txt"

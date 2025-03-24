@@ -4,6 +4,32 @@ import helper.constants as constants
 import helper.data.importFunctions as read
 import numpy as np
 import json
+import os 
+import datetime
+import tagesNews
+import chooseTopics
+import unicodedata
+
+TIMESTAMP_FILE = constants.TIMESTAMP_PATH
+def load_timestamp():
+    if os.path.exists(TIMESTAMP_FILE):
+        with open(TIMESTAMP_FILE, 'r') as file:
+            timestamp_str = file.read().strip()
+            return datetime.datetime.fromisoformat(timestamp_str)
+    return None
+
+def save_timestamp(timestamp):
+    with open(TIMESTAMP_FILE, 'w') as file:
+        file.write(timestamp.isoformat())
+
+def check_and_call_functions():
+    current_time = datetime.datetime.now()
+    last_timestamp = load_timestamp()
+
+    if last_timestamp is None or (current_time - last_timestamp).total_seconds() > 12 * 60 * 60:
+        tagesNews.get_homepage()
+        chooseTopics.chooseTopics()
+    save_timestamp(current_time)
 
 modelID = constants.MODEL_ID
 embed_model = constants.EMBED_MODEL_ID
@@ -54,7 +80,23 @@ def convert_to_llm_conversation(question: str, top_chunks: list[tuple]):
     return messages
 
 def convert_unicode_escapes(text):
-    return text.encode('iso-8859-1').decode('unicode_escape')
+    # Fix double-encoded text
+    fixed_text = fix_double_encoded_utf8(text)
+    # Decode escape sequences
+    escaped_text = bytes(fixed_text, "utf-8").decode("unicode_escape")
+    # Normalize the text to handle special characters
+    normalized_text = unicodedata.normalize('NFKC', escaped_text)
+    return normalized_text
+
+
+def fix_double_encoded_utf8(text):
+    try:
+        # Attempt to decode the text assuming it is double-encoded
+        fixed_text = text.encode('latin1').decode('utf-8')
+        return fixed_text
+    except UnicodeEncodeError as e:
+        print("UnicodeEncodeError:", e)
+        return text
 
 st.title("Die Schlagzeile von Morgen")
 
