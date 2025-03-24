@@ -13,7 +13,8 @@
 
 # CMD ["pipenv", "run", "prod"]
 # Use an NVIDIA CUDA runtime base image with Ubuntu
-FROM nvidia/cuda:12.0.0-cudnn8-runtime-ubuntu22.04
+FROM 12.8.1-cudnn-runtime-ubuntu24.04
+
 
 # Install Python 3.11 and other required system packages
 RUN apt-get update && \
