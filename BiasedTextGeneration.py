@@ -8,14 +8,15 @@ import os
 import datetime
 import tagesNews
 import chooseTopics
-import unicodedata
 
 TIMESTAMP_FILE = constants.TIMESTAMP_PATH
 def load_timestamp():
     if os.path.exists(TIMESTAMP_FILE):
+        print('file exists')
         with open(TIMESTAMP_FILE, 'r') as file:
             timestamp_str = file.read().strip()
             return datetime.datetime.fromisoformat(timestamp_str)
+    print('file does not exist')
     return None
 
 def save_timestamp(timestamp):
@@ -30,6 +31,8 @@ def check_and_call_functions():
         tagesNews.get_homepage()
         chooseTopics.chooseTopics()
     save_timestamp(current_time)
+
+check_and_call_functions()
 
 modelID = constants.MODEL_ID
 embed_model = constants.EMBED_MODEL_ID
@@ -80,23 +83,7 @@ def convert_to_llm_conversation(question: str, top_chunks: list[tuple]):
     return messages
 
 def convert_unicode_escapes(text):
-    # Fix double-encoded text
-    fixed_text = fix_double_encoded_utf8(text)
-    # Decode escape sequences
-    escaped_text = bytes(fixed_text, "utf-8").decode("unicode_escape")
-    # Normalize the text to handle special characters
-    normalized_text = unicodedata.normalize('NFKC', escaped_text)
-    return normalized_text
-
-
-def fix_double_encoded_utf8(text):
-    try:
-        # Attempt to decode the text assuming it is double-encoded
-        fixed_text = text.encode('latin1').decode('utf-8')
-        return fixed_text
-    except UnicodeEncodeError as e:
-        print("UnicodeEncodeError:", e)
-        return text
+    return text.encode('iso-8859-1').decode('unicode_escape')
 
 st.title("Die Schlagzeile von Morgen")
 

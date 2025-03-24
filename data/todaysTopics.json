@@ -1,14 +1,20 @@
 {
     "Volksstimme": [
-        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\", \"Leben mit dem Unbegreiflichen Germanwings-Absturz\", \"Zahl der Elterngeld-Bezieher sinkt weiter Statistisches Bundesamt\"}"
+        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\", ",
+        "\"Elterngeld-Bezieher sinkt weiter Statistisches Bundesamt\", ",
+        "\"In Saudi-Arabien wird wieder verhandelt Krieg gegen die Ukraine\"}"
     ],
     "Der Aufbruch": [
-        "{\"Zahl der Elterngeld-Bezieher sinkt weiter\", \"Fortschritte gegen Tuberkulose in Gefahr Nach Kürzung der US-Hilfen\", \"Bessere Arbeitsbedingungen und faire Löhne für alle\" }"
+        "{\"Zahl der Elterngeld-Bezieher sinkt weiter\", \"Fortschritte gegen Tuberkulose in Gefahr Nach Kürzung der US-Hilfen\", \"Bessere Arbeitsbedingungen und faire Löhne für alle\"}"
     ],
     "Klartext": [
-        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\"; \"USA fordern erneut Gespräche über Atomprogramm Streit mit Iran\", \"Leben mit dem Unbegreiflichen Germanwings-Absturz\"}"
+        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\", ",
+        "\"Iran fordern erneut Gespräche über Atomprogramm Streit mit USA\", ",
+        "\"Zahl der Elterngeld-Bezieher sinkt weiter Statistisches Bundesamt\"}"
     ],
     "Der Kritische Beobachter": [
-        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\", \"Leben mit dem Unbegreiflichen Germanwings-Absturz\", \"USA fordern erneut Gespräche über Atomprogramm Streit mit Iran\"}"
+        "{\"Union und SPD wollen sich nicht drängen lassen Koalitionsverhandlungen\", ",
+        " \"USA fordern erneut Gespräche über Atomprogramm Streit mit Iran\", ",
+        " \"Zahl der Elterngeld-Bezieher sinkt weiter Statistisches Bundesamt\"}"
     ]
 }

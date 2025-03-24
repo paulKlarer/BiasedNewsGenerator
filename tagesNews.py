@@ -39,5 +39,3 @@ def get_homepage():
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON response: {e}")
 
-# Call the function
-get_homepage()
