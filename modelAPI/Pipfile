@@ -10,7 +10,7 @@ pydantic = "*"
 transformers = "*"
 wandb = "*"
 unsloth = "*"
-torch = {version = "==2.0.1", index = "pytorch"}
+torch = "==2.0.1"
 
 [dev-packages]
 
