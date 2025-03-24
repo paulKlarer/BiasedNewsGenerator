@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake News Generator</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Include marked for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- External CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="news-generator-page">
+  <!-- Disclaimer Modal -->
+  <div id="disclaimer-modal" class="modal">
+    <div class="modal-content">
+      <h2>Disclaimer</h2>
+      <p>
+        Diese Website ist Teil eines universitären Projekts. Wir distanzieren uns von sämtlichen Falschmeldungen, 
+        die mit diesem Tool erzeugt werden. Die generierten Inhalte dienen ausschließlich Forschungszwecken und 
+        dürfen weder veröffentlicht noch in realen Kontexten verwendet werden.
+        <br><br> 
+        This website is part of a university project. We distance ourselves from any fake news generated using this tool. 
+        The content generated is purely for research purposes and should not be published or used in any real-world context.
+      </p>
+      <button id="close-disclaimer" class="btn">I Understand</button>
+    </div>
+  </div>
+  <!-- Navigation Bar -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html">News Generator</a>
+    </div>
+    <div class="nav-right">
+      <a href="evaluation.html">Evaluation</a>
+    </div>
+  </nav>
+  
+  <!-- Floating Info Button -->
+  <div id="info-button" class="info-button">i</div>
+  
+  <div class="container news-generator-container">
+    <h1>📰 Fake News Generator</h1>
+    <h2>Top 10 News from Tagesschau</h2>
+    <div id="news-grid" class="news-grid">
+      <!-- News cards will be inserted here -->
+    </div>
+    
+    <!-- Options -->
+    <div class="options-container">
+      <label>
+        <input type="checkbox" id="fake-citation">
+        Fake Citations
+      </label>
+      <label>
+        <input type="checkbox" id="call-to-action">
+        Call to Action
+      </label>
+    </div>
+
+    <!-- Model selection -->
+    <div class="model-select">
+      <label for="model-select">Choose a model:</label>
+      <select id="model-select">
+        <option value="Gemini 2.0 Flash">Gemini 2.0 Flash - rechts</option>
+        <option value="GPT-Neo">politisch rechts</option>
+        <option value="CustomModel">oder politisch rechts</option>
+      </select>
+    </div>
+    <button id="generate-btn" class="generate-button" disabled>Start Generation</button>
+    
+    <!-- Loader Animation -->
+    <div id="loader" class="loader" style="display:none;">
+      <div></div><div></div><div></div>
+    </div>
+    
+    <!-- Output container -->
+    <div id="output" class="output"></div>
+  </div>
+
+  <!-- Modal for Full Article Display ("Read More") -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="close-modal" class="close-btn">&times;</span>
+      <h2 id="modal-title"></h2>
+      <p id="modal-content"></p>
+    </div>
+  </div>
+  
+  <!-- Modal for Info -->
+  <div id="info-modal" class="info-modal">
+    <div class="info-modal-content">
+      <span id="close-info" class="close-btn">&times;</span>
+      <div id="info-markdown"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedArticle = null;
+    let newsArticles = [];
+
+    // Info markdown text for the News Generator page
+    const infoMarkdown = `
+## Wie funktioniert der Fake News Generator?
+
+Unser **Fake News Generator** ermöglicht es dir, spielerisch zu erleben, wie Nachrichten verzerrt werden können. So funktioniert es:
+
+✅ **Themenwahl:**  
+   - Wähle eines der **Top 10 Tagesschau-Themen des Tages** aus.  
+   - Falls du mehr erfahren möchtest, kannst du mit **„Read more“** den Originalartikel lesen.  
+
+🎯 **Manipulationsrichtung:**  
+   - Wähle, in welche politische Richtung die Nachricht verzerrt werden soll.  
+   - Aktuell ist nur die **rechtsgerichtete Verzerrung** implementiert. Weitere Optionen sind in Planung.  
+
+⚡ **Generierung:**  
+   - Klicke auf **„Start Generation“**, um eine manipulierte Version der Nachricht zu erstellen.  
+
+🔎 **Erkunde selbst**, wie harmlose Berichte mit wenigen Kniffen reißerisch, verzerrt oder gar hetzerisch klingen können!
+    `;
+    document.getElementById("info-markdown").innerHTML = marked.parse(infoMarkdown);
+
+    // Fetch news articles from the backend API
+    fetch('/api/news')
+      .then(response => response.json())
+      .then(data => {
+        newsArticles = data;
+        displayNews(data);
+      })
+      .catch(err => console.error("Error fetching news:", err));
+
+    function displayNews(articles) {
+      const newsGrid = document.getElementById('news-grid');
+      newsGrid.innerHTML = '';
+      articles.forEach((article, index) => {
+        // Create a snippet (first 100 characters)
+        let snippet = article.content.substring(0, 100);
+        if(article.content.length > 100) snippet += '...';
+
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        card.innerHTML = `
+          <div class="news-title">${article.title}</div>
+          <div class="news-description">${article.topline}</div>
+          <div class="article-snippet">${snippet}</div>
+          <div class="btn-group">
+            <button class="btn select-button" onclick="selectArticle(${index})">Select</button>
+            <button class="btn read-button" onclick="openModal(${index})">Read More</button>
+          </div>
+        `;
+        newsGrid.appendChild(card);
+      });
+    }
+
+    function selectArticle(index) {
+      selectedArticle = newsArticles[index];
+      const cards = document.getElementsByClassName('news-card');
+      Array.from(cards).forEach((card, i) => {
+        card.classList.toggle('selected', i === index);
+      });
+      // Enable generate button
+      document.getElementById('generate-btn').disabled = false;
+    }
+
+    // Modal functionality for "Read More"
+    function openModal(index) {
+      const modal = document.getElementById("modal");
+      document.getElementById("modal-title").innerText = newsArticles[index].title;
+      document.getElementById("modal-content").innerText = newsArticles[index].content;
+      modal.style.display = "block";
+    }
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+    document.getElementById("close-modal").addEventListener("click", closeModal);
+    window.addEventListener("click", function(event) {
+      if (event.target === document.getElementById("modal")) {
+        closeModal();
+      }
+    });
+
+    // Info Modal functionality
+    document.getElementById("info-button").addEventListener("click", function() {
+      document.getElementById("info-modal").style.display = "block";
+    });
+    document.getElementById("close-info").addEventListener("click", function() {
+      document.getElementById("info-modal").style.display = "none";
+    });
+    window.addEventListener("click", function(event) {
+      if (event.target === document.getElementById("info-modal")) {
+        document.getElementById("info-modal").style.display = "none";
+      }
+    });
+
+    // Handle Generate click
+    document.getElementById('generate-btn').addEventListener('click', function() {
+      if (!selectedArticle) return;
+
+      // Gather user options from checkboxes
+      const fakeCitation = document.getElementById('fake-citation').checked;
+      const callToAction = document.getElementById('call-to-action').checked;
+      
+      // Get model choice
+      const modelChoice = document.getElementById('model-select').value;
+
+      // Show loader and clear output
+      document.getElementById('loader').style.display = 'flex';
+      document.getElementById('output').innerHTML = '';
+
+      // POST request to your Flask backend
+      fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: selectedArticle.content,
+          model_choice: modelChoice,
+          options: {
+            fakeCitation: fakeCitation,
+            callToAction: callToAction
+          }
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loader').style.display = 'none';
+        if (data.error) {
+          document.getElementById('output').innerText = "Error: " + data.error;
+        } else {
+          // Render Markdown output using marked
+          document.getElementById('output').innerHTML = marked.parse(data.generated_text);
+        }
+      })
+      .catch(err => {
+        console.error("Error generating article:", err);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('output').innerText = "Error generating article";
+      });
+    });
+
+    // Show disclaimer modal on page load if not already accepted in the current session
+    window.onload = function() {
+      const disclaimerModal = document.getElementById('disclaimer-modal');
+      const disclaimerAccepted = sessionStorage.getItem('disclaimerAccepted');
+
+      if (!disclaimerAccepted) {
+        disclaimerModal.style.display = 'block';
+
+        document.getElementById('close-disclaimer').addEventListener('click', function() {
+          disclaimerModal.style.display = 'none';
+          sessionStorage.setItem('disclaimerAccepted', 'true');
+        });
+      }
+    };
+  </script>
+</body>
+</html>
