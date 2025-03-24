@@ -1,5 +1,13 @@
 ollama
-#  ollama pull mannix/llama3.1-8b-abliterated
+# ollama pull mannix/llama3.1-8b-abliterated
+# nomic-embed-text:latest
 streamlit
 requests
 numpy
+datetime
+flask
+beautifulsoup4
+python-dotenv
+logging
+flask-cors
+pymongo

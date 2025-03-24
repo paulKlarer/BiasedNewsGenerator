@@ -1,0 +1,100 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="news-generator-page">
+    
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-left">
+          <a href="index.html">News Generator</a>
+      </div>
+        <div class="nav-center">
+          <a href="todaysnews.html">Today's News</a>
+      </div>
+      <div class="nav-right"> 
+          <a href="evaluation.html">Evaluation</a>
+      </div>
+    </nav>
+    
+    <div class="container news-generator-container">
+        <h1>Your AI-Generated News Briefing</h1>
+        <h2>Generate and evaluate AI-generated news articles</h2>
+        
+        <!-- Model Selection -->
+        <div class="model-select">
+            <label for="model">Choose Model:</label>
+            <select id="model">
+                <option value="gemini 2.0 flash">gemini 2.0 flash</option>
+                <option value="Fine Tuned Model">Fine Tuned Model</option>
+            </select>
+            <button class="generate-button">Generate</button>
+        </div>
+        
+        <!-- Top 3 Topics Grid -->
+        <div class="news-topics-grid" id="topics-container"></div>
+    </div>
+    
+    <!-- Info Button -->
+    <div class="info-button">i</div>
+    
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Disclaimer</h2>
+            <p>This news generator creates AI-generated articles. Please verify information before sharing.</p>
+            <button class="btn" onclick="closeModal()">Understood</button>
+        </div>
+    </div>
+    
+    <script>
+        function closeModal() {
+            document.getElementById("disclaimer-modal").style.display = "none";
+        }
+        
+        async function fetchHomepageNews() {
+            console.log("attemting to get homepage")
+            try { 
+                const response = await fetch("http://0.0.0.0:8000/get_homepage"); // Adjust URL if needed
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const newsData = await response.json();
+                
+            } catch (error) {
+                console.error("Error fetching homepage news:", error);
+            }
+        }
+        async function generateTopics() {
+    try {
+        const response = await fetch("http://0.0.0.0:8000/generate_topics");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const topicsData = await response.json();
+
+        displayTopics(topicsData);
+    } catch (error) {
+        console.error("Error generating topics:", error);
+    }
+    }
+
+    function displayTopics(topicsData) {
+            const topicsContainer = document.getElementById("topics-container");
+            topicsContainer.innerHTML = "";
+
+            Object.entries(topicsData).slice(0, 3).forEach(([newspaper, topics], index) => {
+                const topicElement = document.createElement("div");
+                topicElement.className = "news-topic-box";
+                topicElement.innerHTML = `<h3>${newspaper}</h3><p>${topics[0]}</p>`;
+                topicsContainer.appendChild(topicElement);
+            });
+        }
+
+    </script>
+</body>
+</html>

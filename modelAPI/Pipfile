@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+pydantic = "*"
+transformers = "*"
+wandb = "*"
+unsloth = "*"
+torch = "==2.0.1"
+
+[dev-packages]
+
+[scripts]
+dev = "uvicorn main:app --host=0.0.0.0 --reload"
+prod = "python test1.py"
+
+[requires]
+python_version = "3.11"

@@ -29,6 +29,18 @@ def save_article(article_text, model_choice, generated_text):
     }
     articles_collection.insert_one(article_data)
 
+def save_homepage(cleaned_homepage):
+    """
+    Save the homepage  to the MongoDB collection.
+    """
+    homepage_collection = connect_to_mongodb('tagesschau homepages')
+
+    article_data = {
+        "tagesschau_homepage":cleaned_homepage,
+        "timestamp": datetime.datetime.utcnow()
+    }
+    homepage_collection.insert_one(article_data)
+
 def save_evaluation_data(evaluation_data):
     """
     Save the evaluation data to the MongoDB collection.

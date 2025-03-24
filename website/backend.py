@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,send_from_directory
 import requests
 import re
 from bs4 import BeautifulSoup
@@ -7,9 +7,10 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-from flask import send_from_directory
-from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data
+
+from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage
 import random 
+import numpy as np
 
 load_dotenv()
 
@@ -132,6 +133,7 @@ def get_top_10_tagesschau_news():
     if response.status_code != 200:
         logging.error(f"Status code error: {response.status_code}")
         return []
+    
     
     try:
         data = response.json()
@@ -280,5 +282,120 @@ def api_generate():
     
     return jsonify({"generated_text": generated_text})
 
+def chooseTopics(homepage, zeitungen):
+    """
+    Generate a list of 3 topics per newspaper based on their focus.
+    """
+    titles = [f"{entry['title']} {entry['topline']}" for entry in homepage]
+    topics_dict = {}
+
+    for z in zeitungen:
+        print(f"Generating topics for {z['Name']}...")
+
+        prompt = (f"Wähle aus der Liste 3 passende Themen für die Zeitung {z['Name']} anhand dieser Themen aus:\n"
+                  f"{'; '.join(titles)}\n\n"
+                  f"{z['Name']} operiert unter dem Motto: {z['Motto']} und schreibt am meisten über {z['Themen']}.\n"
+                  f"Gib eine Liste mit 3 passenden Themen zurück, über die {z['Name']} heute berichten kann.")
+
+        response = send_request(prompt)
+        topics_dict[z['Name']] = response.split('\n')
+
+    return topics_dict
+
+@app.route('/generate_topics', methods=['GET'])
+def generate_topics():
+    """
+    Flask route to generate newspaper topics.
+    """
+    try:
+        # Fetch the latest homepage news
+        homepage_collection = connect_to_mongodb('tagesschau_homepages')
+        latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])  # Get most recent data
+        if not latest_homepage:
+            return jsonify({"error": "No homepage data found"}), 404
+
+        # Fetch the newspaper metadata
+        newspaper_collection = connect_to_mongodb('newspaper_metadata')
+        zeitungen = list(newspaper_collection.find({}))
+
+        if not zeitungen:
+            return jsonify({"error": "No newspaper metadata found"}), 404
+
+        # Generate topics
+        topics_dict = chooseTopics(latest_homepage['tagesschau_homepage'], zeitungen)
+
+        # Save topics to MongoDB
+        topics_collection = connect_to_mongodb('generated_topics')
+        topics_collection.insert_one({
+            "timestamp": datetime.datetime.utcnow(),
+            "topics": topics_dict
+        })
+
+        return jsonify(topics_dict)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def chunk_text(text: str, chunk_size=500):
+    words = text.split()
+    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+    return chunks
+
+def cosine_similarity(vec1, vec2):
+    # Compute dot product
+    dot_product = np.dot(vec1, vec2)
+    
+    # Compute magnitude of the vectors
+    magnitude_vec1 = np.sqrt(np.dot(vec1, vec1))
+    magnitude_vec2 = np.sqrt(np.dot(vec2, vec2))
+    
+    # Avoid division by zero in case of zero vectors
+    if magnitude_vec1 == 0 or magnitude_vec2 == 0:
+        return 0.0
+    
+    # Compute cosine similarity
+    cosine_similarity = dot_product / (magnitude_vec1 * magnitude_vec2)
+    return cosine_similarity
+
+def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=1):
+    # Calculate cosine similarities manually
+    similarities = [cosine_similarity(question_embedding, chunk_embedding) for chunk_embedding in chunk_embeddings]
+    
+    # Get the indices of the top N chunks with the highest cosine similarities
+    top_n_indices = np.argsort(similarities)[-top_n:][::-1]
+    
+    # Return the indices and corresponding similarity scores
+    top_n_chunks = [(idx, similarities[idx]) for idx in top_n_indices]
+    return top_n_chunks
+
+@app.route('/get_homepage', methods=['GET'])
+def get_homepage():
+    url = 'https://www.tagesschau.de/api2u/homepage'
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        news_items = data.get("news", [])
+        if news_items:
+            news_items.pop()
+
+        parsed_news = [{
+            "title": item.get("title"),
+            "topline": item.get("topline"),
+            "tags": item.get("tags"),
+            "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
+        } for item in news_items]
+        save_homepage(parsed_news)
+
+        return jsonify(parsed_news)
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)
+
