@@ -10,7 +10,7 @@ pydantic = "*"
 transformers = "*"
 wandb = "*"
 unsloth = "*"
-torch = "==2.0.1"
+torch = "*"
 bitsandbytes = "*"
 
 [dev-packages]
