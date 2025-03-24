@@ -15,7 +15,7 @@
 # Use an NVIDIA CUDA runtime base image with Ubuntu
 FROM nvidia/cuda:12.8.1-devel-ubuntu22.04
 
-
+ENV WANDB_API_KEY=4cf9d26370d9ec33ecd70d8a4d2e3cd3ce28019b
 # Install Python 3.11 and other required system packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
