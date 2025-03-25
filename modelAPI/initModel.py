@@ -24,6 +24,7 @@ class InitializeModel:
             load_in_4bit=load_in_4bit,
             # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
         )
+        print("Model loaded!----Yonis")
         return model, tokenizer
     def runPromt(self, prompt):
         messages = [
