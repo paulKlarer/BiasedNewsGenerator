@@ -7,17 +7,15 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-
-from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage
+from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage, save_topics, save_topic_article
 import random 
 import numpy as np
+import json
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-
-from flask import send_from_directory
 
 app = Flask(__name__, static_folder="frontend")
 
@@ -218,20 +216,16 @@ def send_request(prompt, model_name = "gemini-2.0-flash"):
             }
         ]
     }
-
+    
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            generated_text = result['candidates'][0]['content']['parts'][0]['text']
     except requests.exceptions.RequestException as e:
-        logging.error(f"API request error in send_request: {e}")
-        return None
-
-    try:
-        result = response.json()
-        generated_text = result['candidates'][0]['content']['parts'][0]['text']
-    except Exception as e:
-        logging.error(f"Error processing response in send_request: {e}")
-        return None
+            logging.error(f"API request error in send_request: {e}")
+            return None
+        
     return generated_text
 
 def get_api_key():
@@ -282,6 +276,25 @@ def api_generate():
     
     return jsonify({"generated_text": generated_text})
 
+def extract_array_content_with_brackets(input_string):
+    """
+    Extrahiert den Inhalt einschließlich der eckigen Klammern '[' und ']' aus einem String.
+
+    Args:
+        input_string (str): Der Eingabestring.
+
+    Returns:
+        str: Der extrahierte Inhalt einschließlich der eckigen Klammern oder None, wenn kein gültiger Inhalt gefunden wird.
+    """
+    try:
+        start_index = input_string.index('[')
+        end_index = input_string.index(']')
+
+        extracted_content = input_string[start_index:end_index + 1] # +1 um das ] mit einzubeziehen
+        return extracted_content.strip()
+    except ValueError:
+        return None  # Kein gültiger Inhalt gefunden
+
 def chooseTopics(homepage, zeitungen):
     """
     Generate a list of 3 topics per newspaper based on their focus.
@@ -290,51 +303,66 @@ def chooseTopics(homepage, zeitungen):
     topics_dict = {}
 
     for z in zeitungen:
-        print(f"Generating topics for {z['Name']}...")
 
-        prompt = (f"Wähle aus der Liste 3 passende Themen für die Zeitung {z['Name']} anhand dieser Themen aus:\n"
-                  f"{'; '.join(titles)}\n\n"
-                  f"{z['Name']} operiert unter dem Motto: {z['Motto']} und schreibt am meisten über {z['Themen']}.\n"
-                  f"Gib eine Liste mit 3 passenden Themen zurück, über die {z['Name']} heute berichten kann.")
-
+        prompt = (f"Generiere ein JSON-Array mit genau 3 passenden Themen für die Zeitung '{z['Name']}'. "
+          f"Wähle diese Themen aus der folgenden Liste aus: {'; '.join(titles)}. "
+          f"Berücksichtige dabei das Motto der Zeitung: '{z['Motto']}' und ihre Schwerpunktthemen: {z['Themen']}. "
+          f"Gib nur das JSON-Array im folgenden Format zurück: [Thema 1, Thema 2, Thema 3].")
+        print(prompt)
         response = send_request(prompt)
-        topics_dict[z['Name']] = response.split('\n')
+        response= extract_array_content_with_brackets(response)
+        topics_dict[z['Name']] = response
 
     return topics_dict
 
 @app.route('/generate_topics', methods=['GET'])
 def generate_topics():
+    print("generate_topics route called") #debugging print
     """
     Flask route to generate newspaper topics.
     """
-    try:
-        # Fetch the latest homepage news
-        homepage_collection = connect_to_mongodb('tagesschau_homepages')
-        latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])  # Get most recent data
-        if not latest_homepage:
-            return jsonify({"error": "No homepage data found"}), 404
+    generated_topics_collection = connect_to_mongodb('generated_topics')
+    latest_topic = generated_topics_collection.find_one(sort=[("timestamp", -1)])
+    last_timestamp = latest_topic['timestamp']
+    time_difference = datetime.datetime.utcnow() - last_timestamp
 
-        # Fetch the newspaper metadata
-        newspaper_collection = connect_to_mongodb('newspaper_metadata')
-        zeitungen = list(newspaper_collection.find({}))
+    if time_difference < datetime.timedelta(hours=1):
+        # Wandle ObjectId in String um
+            latest_topic['_id'] = str(latest_topic['_id'])
+            # Wandle timestamp in String um wenn nötig
+            latest_topic['timestamp'] = str(latest_topic['timestamp'])
+            return jsonify(latest_topic)
+    else:
+        try:
+            # Fetch the latest homepage news
+            homepage_collection = connect_to_mongodb('tagesschau homepages')
+            latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])
+            if not latest_homepage:
+                print("No homepage data found") #debugging print
+                return jsonify({"error": "No homepage data found"}), 404
 
-        if not zeitungen:
-            return jsonify({"error": "No newspaper metadata found"}), 404
+            # Fetch the newspaper metadata
+            newspaper_collection = connect_to_mongodb('NewspaperMeta')
+            if newspaper_collection is None:  # Korrigierte Überprüfung
+                print("Error connecting to newspaper metadata collection.")
+                return jsonify({"error": "Error connecting to newspaper metadata collection."}), 500
 
-        # Generate topics
-        topics_dict = chooseTopics(latest_homepage['tagesschau_homepage'], zeitungen)
+            zeitungen = list(newspaper_collection.find({}))
+        
+            if not zeitungen:
+                print("No newspaper metadata found")
+                return jsonify({"error": "No newspaper metadata found"}), 404
 
-        # Save topics to MongoDB
-        topics_collection = connect_to_mongodb('generated_topics')
-        topics_collection.insert_one({
-            "timestamp": datetime.datetime.utcnow(),
-            "topics": topics_dict
-        })
+            # Generate topics
+            topics_dict = chooseTopics(latest_homepage['tagesschau_homepage'], zeitungen) 
+            # Save topics to MongoDB
+            save_topics(topics_dict)
 
-        return jsonify(topics_dict)
+            return jsonify(topics_dict)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        except Exception as e:
+            print(f"Error: {e}") #debugging print
+            return jsonify({"error": str(e)}), 500
 
 def chunk_text(text: str, chunk_size=500):
     words = text.split()
@@ -357,7 +385,7 @@ def cosine_similarity(vec1, vec2):
     cosine_similarity = dot_product / (magnitude_vec1 * magnitude_vec2)
     return cosine_similarity
 
-def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=1):
+def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=3):
     # Calculate cosine similarities manually
     similarities = [cosine_similarity(question_embedding, chunk_embedding) for chunk_embedding in chunk_embeddings]
     
@@ -370,31 +398,139 @@ def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=1):
 
 @app.route('/get_homepage', methods=['GET'])
 def get_homepage():
-    url = 'https://www.tagesschau.de/api2u/homepage'
+    homepage_collection = connect_to_mongodb('tagesschau homepages')
+    latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])
+    last_timestamp = latest_homepage['timestamp']
+    time_difference = datetime.datetime.utcnow() - last_timestamp
+
+    if time_difference < datetime.timedelta(hours=6):
+        # Wandle ObjectId in String um
+            latest_homepage['_id'] = str(latest_homepage['_id'])
+            # Wandle timestamp in String um wenn nötig
+            latest_homepage['timestamp'] = str(latest_homepage['timestamp'])
+            return jsonify(latest_homepage)
+    else:
+
+        url = 'https://www.tagesschau.de/api2u/homepage'
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+
+            news_items = data.get("news", [])
+            if news_items:
+                news_items.pop()
+
+            parsed_news = [{
+                "title": item.get("title"),
+                "topline": item.get("topline"),
+                "tags": item.get("tags"),
+                "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
+            } for item in news_items]
+            save_homepage(parsed_news)
+            return jsonify(parsed_news)
+
+
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": str(e)}), 500
+
+@app.route('/get_latest_topics', methods=['GET'])
+def get_latest_topics():
+    generated_topics_collection = connect_to_mongodb('generated_topics')
+    if generated_topics_collection is None:
+        return jsonify({"error": "Error connecting to generated topics collection."}), 500
+
+    # Holt alle Dokumente aus der Collection und sortiert sie nach dem Zeitstempel (neueste zuerst)
+    latest_topics = generated_topics_collection.find().sort("timestamp", -1)
+    topics_list = []
+    for topic in latest_topics:
+        topics_list.append(topic["topics"])
+
+    if topics_list:
+        return jsonify(topics_list[0]) #gibt nur das neuste ergebnis zurück
+    else:
+        return jsonify({})
+    
+@app.route('/get_articles')
+def get_articles():
+    newspaper = request.args.get('newspaper')
+    generated_topics_collection = connect_to_mongodb('generated_topics')
+    homepage_collection = connect_to_mongodb('tagesschau homepages')
+    newspaper_collection = connect_to_mongodb('NewspaperMeta')
+
+    latest_topics = generated_topics_collection.find_one(sort=[("timestamp", -1)])['topics'][newspaper]
+    latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])['tagesschau_homepage']
+    zeitung = newspaper_collection.find_one({"Name": newspaper})
+
+    articles_list = []
+    for topic in json.loads(latest_topics): #load the string into a json array.
+        # Embed topic and homepage content
+        topic_embedding = get_google_embedding(topic)
+        # Chunk homepage content
+        homepage_chunks = []
+        for item in latest_homepage:
+            content = item['title'] + " " + item['topline'] + " " + " ".join(item['content'])
+            homepage_chunks.extend(chunk_text(content, chunk_size=300)) 
+        
+        # Embed homepage chunks
+        chunk_embeddings = [get_google_embedding(chunk) for chunk in homepage_chunks]
+
+        if topic_embedding is not None and len(chunk_embeddings) > 0: # Korrigierte Bedingung
+            top_chunks = find_top_n_chunks(topic_embedding, chunk_embeddings) 
+            # Build context from top chunks
+            context = " ".join([homepage_chunks[idx] for idx, _ in top_chunks])
+            prompt = (f"Basierend auf dem Thema '{topic}' und dem folgenden Kontext {context}. " 
+                     f"Die Zeitung '{zeitung['Name']}' hat das Motto {zeitung['Motto']} und folgenden Hintergrund: {zeitung['Hintergrund']}. " 
+                     f"Der Artikel soll im folgenden Stil verfasst sein: {zeitung['Stil']}. Wenn es zum Stil passt verwnede gefälschte Zitate von bekannten oder fiktiven autoriäten wie proffesoren oder andren seriösen figuren um dem Artikel mehr Schwung zu verleiten")
+            article_content = send_request(prompt)
+            # Generate article prompt with fake citations
+            
+            if article_content:
+                articles_list.append({
+                    "newspaper": zeitung['Name'],
+                    "title": topic,
+                    "content": article_content
+                })
+                save_topic_article(article_content,topic)
+        else:
+            articles_list.append({
+                "title": topic,
+                "content": "Artikel konnte nicht generiert werden."
+            })
+
+    return jsonify(articles_list)
+
+def get_google_embedding(text, model_name="text-embedding-004"):
+    """
+    Generates embeddings for the given text using the Google Generative AI API.
+    """
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:embedContent?key={get_api_key()}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": f"models/{model_name}",
+        "content": {
+            "parts": [{
+                "text": text
+            }]
+        }
+    }
 
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-
-        news_items = data.get("news", [])
-        if news_items:
-            news_items.pop()
-
-        parsed_news = [{
-            "title": item.get("title"),
-            "topline": item.get("topline"),
-            "tags": item.get("tags"),
-            "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
-        } for item in news_items]
-        save_homepage(parsed_news)
-
-        return jsonify(parsed_news)
-
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        result = response.json()
+        embedding = result['embedding']['values']
+        return np.array(embedding)  # Convert to numpy array for cosine similarity calculation
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
-
-
+        logging.error(f"Embedding API request failed: {e}")
+        return None
+    except KeyError as e:
+        logging.error(f"Embedding API response format error: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logging.error(f"Embedding API response JSON decode error: {e}")
+        return None
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

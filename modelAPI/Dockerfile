@@ -1,25 +1,13 @@
-# FROM python:3.11-slim
 
-
-# RUN apt-get update && apt-get install -y --no-install-recommends
-
-# RUN pip install --upgrade pip && pip install pipenv
-
-# COPY . .
-
-# RUN pipenv install 
-
-# EXPOSE 8000
-
-# CMD ["pipenv", "run", "prod"]
 # Use an NVIDIA CUDA runtime base image with Ubuntu
 FROM nvidia/cuda:12.8.1-devel-ubuntu22.04
 
-
+ENV WANDB_API_KEY=4cf9d26370d9ec33ecd70d8a4d2e3cd3ce28019b
 # Install Python 3.11 and other required system packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       python3.11 \
+      python3.11-dev \
       python3.11-venv \
       python3.11-distutils \
       curl && \
@@ -31,8 +19,8 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 # Install pipenv
 RUN pip install pipenv
 
-# Set working directory
-WORKDIR /app
+# # Set working directory
+# WORKDIR /app
 
 # Copy your application code
 COPY . .

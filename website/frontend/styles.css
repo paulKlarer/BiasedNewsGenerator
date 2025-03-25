@@ -460,3 +460,103 @@
     background-color: var(--accent-color);
     color: var(--text-color);
   }
+/* Zeitungsauswahl (Newspaper Selection) */
+.newspaper-selection {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.newspaper-selection h2 {
+  font-size: 1.6rem;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.newspaper-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.newspaper-option {
+  padding: 10px 15px;
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  text-align: center;
+  background-color: var(--secondary-color);
+}
+
+.newspaper-option:hover {
+  background-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.newspaper-option.selected {
+  border: 2px solid var(--primary-color);
+  background-color: #e0eafc;
+}
+
+.newspaper-selection-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.newspaper-selection-buttons .btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.newspaper-selection-buttons .btn:hover {
+  transform: scale(1.02);
+}
+
+.newspaper-selection-buttons .select-button {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+}
+
+.newspaper-selection-buttons .select-button:hover {
+  background-color: #7f72ff;
+}
+
+.newspaper-selection-buttons .cancel-button {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+.newspaper-selection-buttons .cancel-button:hover {
+  background-color: #bebed8;
+}
+.news-articles-grid {
+  display: flex; /* Verwende Flexbox für die Anordnung */
+  flex-direction: column; /* Ordne die Artikel in einer Spalte an */
+  gap: 20px; /* Abstand zwischen den Artikeln */
+  margin-top: 20px; /* Abstand zum Themenraster */
+}
+
+.news-article-box {
+  border: 1px solid #ddd;
+  padding: 20px;
+}
+
+.news-article-box h3 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.news-article-box p {
+  line-height: 1.6;
+}

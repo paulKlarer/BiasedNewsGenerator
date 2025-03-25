@@ -28,6 +28,8 @@ class PromptRequest(BaseModel):
 # POST-Endpoint, der den Prompt entgegennimmt und eine Antwort zurückgibt
 @app.post("/generate-response", dependencies=[Depends(get_current_username)])
 async def generate_response(data: PromptRequest):
+    #log info into console
+    print(f"Received prompt: {data.prompt}---yonis")
     prompt = model1.runPromt(data.prompt)
     # Hier könnte eine komplexere Logik zur Antwortgenerierung implementiert werden
     response_text = f"Antwort auf deinen Prompt: '{prompt}'"
@@ -35,4 +37,5 @@ async def generate_response(data: PromptRequest):
 
 # Optional: Starte den Server direkt mit diesem Skript
 if __name__ == "__main__":
+    print("Server wird gestartet...-Yonis")
     uvicorn.run("test1:app", host="0.0.0.0", port=8000, reload=True)

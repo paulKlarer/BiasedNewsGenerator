@@ -41,6 +41,29 @@ def save_homepage(cleaned_homepage):
     }
     homepage_collection.insert_one(article_data)
 
+def save_topics(topics_dict):
+    """
+    Speichert die generierten Themen in der MongoDB-Collection.
+    """
+    topics_collection = connect_to_mongodb('generated_topics')
+    article_data = {
+        "timestamp": datetime.datetime.utcnow(),
+        "topics": topics_dict
+    }
+    topics_collection.insert_one(article_data)
+
+def save_topic_article(article, topic):
+    """
+    Speichert die generierten Themen in der MongoDB-Collection.
+    """
+    topics_collection = connect_to_mongodb('generated_topic_articles')
+    article_data = {
+        "timestamp": datetime.datetime.utcnow(),
+        "topic": topic,
+        "article":article
+    }
+    topics_collection.insert_one(article_data)
+
 def save_evaluation_data(evaluation_data):
     """
     Save the evaluation data to the MongoDB collection.
