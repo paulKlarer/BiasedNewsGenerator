@@ -69,7 +69,7 @@ from transformers import pipeline
 ##############################################################################
 
 def call_finetuned_model_api(prompt):
-    load_dotenv()
+    #load_dotenv()
     """
     Sends a POST request to the finetuned FastAPI model (test1.py) running at port 8000.
     """
@@ -100,12 +100,10 @@ def call_finetuned_model_api(prompt):
 ##############################################################################
 
 evaluation_results_baseline = []
-
 evaluation_results_finetuned = []
-
 def main_pipeline():
 
-    load_dotenv()
+    #load_dotenv()
 
     generated_articles_list = get_generated_articles()
 
@@ -136,11 +134,8 @@ if __name__ == "__main__":
     main_pipeline()
 
  
-
 #################################
-
 #Evaulator for List output evaluation for finetuned mode compared to OTS
-
 ####################################
 
 from website.backend import send_request
@@ -185,13 +180,10 @@ TEXT:
     response = send_request(prompt)
 
     # 4) Inferenz / Modellaufruf
-
     #response = generate(prompt, max_length=200, do_sample=False)
-
     model_output = response[0]["generated_text"]
 
     # 5) Parsen der (hoffentlich) im Format "[x, x, x, x]" zurückgegebenen Werte
-
     #    Simple RegEx, die eine Liste in eckigen Klammern sucht.
 
     match = re.search(r"\[\s*([^\]]+)\s*\]", model_output)
