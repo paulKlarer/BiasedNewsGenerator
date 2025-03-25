@@ -7,7 +7,6 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-
 from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage
 import random 
 import numpy as np
@@ -16,8 +15,6 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-
-from flask import send_from_directory
 
 app = Flask(__name__, static_folder="frontend")
 
@@ -304,25 +301,35 @@ def chooseTopics(homepage, zeitungen):
 
 @app.route('/generate_topics', methods=['GET'])
 def generate_topics():
+    print("generate_topics route called") #debugging print
     """
     Flask route to generate newspaper topics.
     """
     try:
         # Fetch the latest homepage news
-        homepage_collection = connect_to_mongodb('tagesschau_homepages')
-        latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])  # Get most recent data
+        homepage_collection = connect_to_mongodb('tagesschau homepages')
+        latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])
         if not latest_homepage:
+            print("No homepage data found") #debugging print
             return jsonify({"error": "No homepage data found"}), 404
 
         # Fetch the newspaper metadata
-        newspaper_collection = connect_to_mongodb('newspaper_metadata')
+        newspaper_collection = connect_to_mongodb('NewspaperMeta')
+        print(f"\n{newspaper_collection}")
+        if newspaper_collection is None:  # Korrigierte Überprüfung
+            print("Error connecting to newspaper metadata collection.")
+            return jsonify({"error": "Error connecting to newspaper metadata collection."}), 500
+
         zeitungen = list(newspaper_collection.find({}))
+        print(f"\n zeitungen")
 
         if not zeitungen:
+            print("No newspaper metadata found")
             return jsonify({"error": "No newspaper metadata found"}), 404
 
         # Generate topics
         topics_dict = chooseTopics(latest_homepage['tagesschau_homepage'], zeitungen)
+        print(f"topics_dict: {topics_dict}") #debugging print
 
         # Save topics to MongoDB
         topics_collection = connect_to_mongodb('generated_topics')
@@ -334,6 +341,7 @@ def generate_topics():
         return jsonify(topics_dict)
 
     except Exception as e:
+        print(f"Error: {e}") #debugging print
         return jsonify({"error": str(e)}), 500
 
 def chunk_text(text: str, chunk_size=500):
@@ -370,29 +378,42 @@ def find_top_n_chunks(question_embedding, chunk_embeddings, top_n=1):
 
 @app.route('/get_homepage', methods=['GET'])
 def get_homepage():
-    url = 'https://www.tagesschau.de/api2u/homepage'
+    homepage_collection = connect_to_mongodb('tagesschau homepages')
+    latest_homepage = homepage_collection.find_one(sort=[("timestamp", -1)])
+    last_timestamp = latest_homepage['timestamp']
+    time_difference = datetime.datetime.utcnow() - last_timestamp
 
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
+    if time_difference < datetime.timedelta(hours=6):
+        # Wandle ObjectId in String um
+            latest_homepage['_id'] = str(latest_homepage['_id'])
+            # Wandle timestamp in String um wenn nötig
+            latest_homepage['timestamp'] = str(latest_homepage['timestamp'])
+            return jsonify(latest_homepage)
+    else:
 
-        news_items = data.get("news", [])
-        if news_items:
-            news_items.pop()
+        url = 'https://www.tagesschau.de/api2u/homepage'
 
-        parsed_news = [{
-            "title": item.get("title"),
-            "topline": item.get("topline"),
-            "tags": item.get("tags"),
-            "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
-        } for item in news_items]
-        save_homepage(parsed_news)
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
 
-        return jsonify(parsed_news)
+            news_items = data.get("news", [])
+            if news_items:
+                news_items.pop()
 
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+            parsed_news = [{
+                "title": item.get("title"),
+                "topline": item.get("topline"),
+                "tags": item.get("tags"),
+                "content": [content_item['value'] for content_item in item['content'] if 'value' in content_item]
+            } for item in news_items]
+            save_homepage(parsed_news)
+            return jsonify(parsed_news)
+
+
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": str(e)}), 500
 
 
 

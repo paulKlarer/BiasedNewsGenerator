@@ -31,11 +31,18 @@
                 <option value="gemini 2.0 flash">gemini 2.0 flash</option>
                 <option value="Fine Tuned Model">Fine Tuned Model</option>
             </select>
-            <button class="generate-button">Generate</button>
+            <label for="newspaper"> Select Newspaper:</label>
+            <select id="newspaper"></select>
+                <option value="Volksstimme">Volksstimme</option>
+                <option value="Aufbruch">Der Aufbruch</option>
+                <option value="Klartext">Klartext</option>
+                <option value="Kritische Beobachter">Der Kritische Beobachter</option>
         </div>
         
         <!-- Top 3 Topics Grid -->
-        <div class="news-topics-grid" id="topics-container"></div>
+        <div class="container news-generator-container">
+            <div class="news-topics-grid" id="topics-container">/div>
+        </div>
     </div>
     
     <!-- Info Button -->
@@ -57,43 +64,60 @@
         }
         
         async function fetchHomepageNews() {
-            console.log("attemting to get homepage")
-            try { 
-                const response = await fetch("http://0.0.0.0:8000/get_homepage"); // Adjust URL if needed
+            console.log("attempting to get homepage");
+            try {
+                const response = await fetch("/get_homepage");
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const newsData = await response.json();
-                
+                 await response.json(); // Return the data
             } catch (error) {
                 console.error("Error fetching homepage news:", error);
+                return null; // Return null in case of error
             }
         }
+
         async function generateTopics() {
-    try {
-        const response = await fetch("http://0.0.0.0:8000/generate_topics");
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            console.log("attemting to generate topics")
+            try {
+                const response = await fetch("/generate_topics");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const topicsData = await response.json();
+                displayTopics(topicsData);
+            } catch (error) {
+                console.error("Error generating topics:", error);
+            }
         }
-        const topicsData = await response.json();
 
-        displayTopics(topicsData);
-    } catch (error) {
-        console.error("Error generating topics:", error);
-    }
-    }
-
-    function displayTopics(topicsData) {
+        function displayTopics(topicsData) {
             const topicsContainer = document.getElementById("topics-container");
             topicsContainer.innerHTML = "";
 
-            Object.entries(topicsData).slice(0, 3).forEach(([newspaper, topics], index) => {
-                const topicElement = document.createElement("div");
-                topicElement.className = "news-topic-box";
-                topicElement.innerHTML = `<h3>${newspaper}</h3><p>${topics[0]}</p>`;
-                topicsContainer.appendChild(topicElement);
-            });
+            if (topicsData) {
+                Object.entries(topicsData).forEach(([newspaper, topics]) => {
+                    const topicElement = document.createElement("div");
+                    topicElement.className = "news-topic-box";
+                    topicElement.innerHTML = `<h3>${newspaper}</h3><ul>${topics.map(topic => `<li>${topic}</li>`).join('')}</ul>`;
+                    topicsContainer.appendChild(topicElement);
+                });
+            } else {
+                topicsContainer.innerHTML = "<p>Topics could not be loaded.</p>";
+            }
+        }    
+
+        async function initializePage() {
+            console.log("Page initialised")
+            try {
+                await fetchHomepageNews(); // Wait for homepage data (not used here)
+                await generateTopics();  // Fetch and display topics
+            } catch (error) {
+                console.error("Initialization error:", error);
+            }
         }
+
+    initializePage();
 
     </script>
 </body>
