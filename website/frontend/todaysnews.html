@@ -32,16 +32,24 @@
                 <option value="Fine Tuned Model">Fine Tuned Model</option>
             </select>
             <label for="newspaper"> Select Newspaper:</label>
-            <select id="newspaper"></select>
+            <select id="newspaper">
                 <option value="Volksstimme">Volksstimme</option>
-                <option value="Aufbruch">Der Aufbruch</option>
+                <option value="DerAufbruch">Der Aufbruch</option>
                 <option value="Klartext">Klartext</option>
-                <option value="Kritische Beobachter">Der Kritische Beobachter</option>
+                <option value="DerKritischeBeobachter">Der Kritische Beobachter</option>
+            </select>
         </div>
         
         <!-- Top 3 Topics Grid -->
         <div class="container news-generator-container">
+            <h2>Themen des Tages</h2>
             <div class="news-topics-grid" id="topics-container">/div>
+        </div>
+
+        <div class="container news-generator-container">
+            <h2>Artikel</h2>
+            <div class="news-articles-grid" id="articles-container">
+                </div>
         </div>
     </div>
     
@@ -80,32 +88,101 @@
         async function generateTopics() {
             console.log("attemting to generate topics")
             try {
-                const response = await fetch("/generate_topics");
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                // Hier wird die erste Anfrage gestartet und die Antwort gespeichert
+                const generateResponse = await fetch("/generate_topics");
+
+                // Hier wird geprüft, ob die erste Anfrage erfolgreich war
+                if (!generateResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${generateResponse.status}`);
                 }
+
+                // Hier wird der response von generate_topics in json umgewandelt.
+                await generateResponse.json();
+
+                // Hier wird die zweite Anfrage gestartet und die Antwort gespeichert
+                const response = await fetch('/get_latest_topics');
+
+                // Hier wird geprüft, ob die zweite Anfrage erfolgreich war
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const topicsData = await response.json();
-                displayTopics(topicsData);
+                const selectedNewspaper = getSelectedNewspaper();
+
+                displayTopics(topicsData, selectedNewspaper);
+                displayArticles(selectedNewspaper)
             } catch (error) {
                 console.error("Error generating topics:", error);
             }
         }
 
-        function displayTopics(topicsData) {
+        function getSelectedNewspaper() {
+            const newspaperSelect = document.getElementById("newspaper");
+            console.log(newspaperSelect.value)
+            return newspaperSelect.value;
+        }
+
+        function displayTopics(topicsData,selectedNewspaper) {
             const topicsContainer = document.getElementById("topics-container");
             topicsContainer.innerHTML = "";
 
-            if (topicsData) {
-                Object.entries(topicsData).forEach(([newspaper, topics]) => {
+            if (topicsData && topicsData[selectedNewspaper]) {
+                let topics = topicsData[selectedNewspaper];
+                console.log(topics)
+                try {
+                    // Versuche, den String in ein Array umzuwandeln
+                    topics = topics.replace(/[\n\r]/g, "").replace(/\\/g, ''); // Entferne Zeilenumbrüche und Backslashes
+                    topics = JSON.parse(topics);
+                } catch (error) {
+                    console.error(`Error parsing topics for ${selectedNewspaper}:`, error);
+                    topicsContainer.innerHTML = `<p>Error loading topics for ${selectedNewspaper}.</p>`;
+                    return; // Beende die Funktion, wenn ein Fehler auftritt
+                }
+                if (Array.isArray(topics)) {
                     const topicElement = document.createElement("div");
                     topicElement.className = "news-topic-box";
-                    topicElement.innerHTML = `<h3>${newspaper}</h3><ul>${topics.map(topic => `<li>${topic}</li>`).join('')}</ul>`;
+                    topicElement.innerHTML = `<h3>${selectedNewspaper}</h3><ul>${topics.map(topic => `<li>${topic}</li>`).join('')}</ul>`;
                     topicsContainer.appendChild(topicElement);
-                });
+                } else {
+                    console.error(`Topics for ${selectedNewspaper} are not an array:`, topics);
+                    topicsContainer.innerHTML = `<p>Topics could not be loaded for ${selectedNewspaper}.</p>`;
+                }
             } else {
-                topicsContainer.innerHTML = "<p>Topics could not be loaded.</p>";
+                topicsContainer.innerHTML = `<p>No topics found for ${selectedNewspaper}.</p>`;
             }
-        }    
+            
+        }
+        
+        async function displayArticles(selectedNewspaper) {
+            const articlesContainer = document.getElementById("articles-container");
+            articlesContainer.innerHTML = ""; // Leere den Container
+
+            try {
+                const response = await fetch(`/get_articles?newspaper=${selectedNewspaper}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const articles = await response.json();
+
+                if (articles && Array.isArray(articles) && articles.length === 3) {
+                    articles.forEach(article => {
+                        const articleElement = document.createElement("div");
+                        articleElement.className = "news-article-box";
+                        articleElement.innerHTML = `
+                            <h3>${article.title}</h3>
+                            <p>${article.content}</p>
+                        `;
+                        articlesContainer.appendChild(articleElement);
+                    });
+                } else {
+                    articlesContainer.innerHTML = "<p>Articles could not be loaded.</p>";
+                }
+            } catch (error) {
+                console.error("Error fetching articles:", error);
+                articlesContainer.innerHTML = "<p>Error loading articles.</p>";
+            }
+        }
 
         async function initializePage() {
             console.log("Page initialised")
@@ -117,7 +194,8 @@
             }
         }
 
-    initializePage();
+    document.addEventListener('DOMContentLoaded', initializePage);
+    document.getElementById("newspaper").addEventListener("change", generateTopics);
 
     </script>
 </body>
