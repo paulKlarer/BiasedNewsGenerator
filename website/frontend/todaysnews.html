@@ -160,6 +160,7 @@
             const articlesContainer = document.getElementById("articles-container");
             articlesContainer.innerHTML = ""; // Leere den Container
             model = document.getElementById("model").value;
+            console.log(model)
             selectedNewspaper=document.getElementById('newspaper').value;
             try {
                 const response = await fetch(`/get_articles?newspaper=${selectedNewspaper}&model=${model}`);
@@ -167,8 +168,7 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const articles = await response.json();
-
-                if (articles && Array.isArray(articles) && articles.length === 3) {
+                if (articles && Array.isArray(articles)) {
                     articles.forEach(article => {
                         const articleElement = document.createElement("div");
                         articleElement.className = "news-article-box"; // Wichtig für das Styling

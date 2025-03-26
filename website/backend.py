@@ -216,10 +216,14 @@ def send_request_fine_tuned(prompt):
             url,
             json={"prompt": prompt},
             auth=HTTPBasicAuth(user, password),
-            timeout=120
+            timeout=240
         )
         resp.raise_for_status()
         data = resp.json()
+        # Entferne den Prompt aus der Antwort
+        prompt_pattern = re.escape(f"{{'prompt': '{prompt}'}}")
+        data = re.sub(prompt_pattern, '', data).strip()
+
         return data.get("response", "No 'response' in JSON")
     except requests.exceptions.RequestException as e:
         logging.error(f"Error calling finetuned model API: {e}")
@@ -538,9 +542,11 @@ def get_articles():
                      f"Die Zeitung '{zeitung['Name']}' hat das Motto {zeitung['Motto']} und folgenden Hintergrund: {zeitung['Hintergrund']}. " 
                      f"Der Artikel soll im folgenden Stil verfasst sein: {zeitung['Stil']}. Wenn es zum Stil passt denk dir Zitate von bekannten oder fiktiven autoriäten, wie proffesoren oder andren seriösen figuren, aus um dem Artikel mehr Schwung zu verleiten")
             if model == "Gemini 2.0 Flash":
+                print('sent trquest to gemini')
                 article_content = send_request(prompt)
             elif model == "fineTunedModel":
-                article_content = send_request_fine_tuned(prompt)
+                print("sent request to fine tuned model")
+                article_content = send_request_fine_tuned(prompt)  
             
             if article_content:
                 articles_list.append({
