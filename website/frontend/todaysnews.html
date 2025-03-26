@@ -29,8 +29,8 @@
         <div class="model-select">
             <label for="model">Choose Model:</label>
             <select id="model">
-                <option value="gemini 2.0 flash">gemini 2.0 flash</option>
-                <option value="Fine Tuned Model">Fine Tuned Model</option>
+                <option value="Gemini 2.0 Flash">Gemini 2.0 Flash</option>
+                <option value="fineTunedModel">Rechtes Fine Tuned Model</option>
             </select>
             <label for="newspaper"> Select Newspaper:</label>
             <select id="newspaper">
@@ -114,7 +114,7 @@
                 const selectedNewspaper = getSelectedNewspaper();
 
                 displayTopics(topicsData, selectedNewspaper);
-                displayArticles(selectedNewspaper)
+                displayArticles();
             } catch (error) {
                 console.error("Error generating topics:", error);
             }
@@ -155,13 +155,14 @@
             
         }
         
-        async function displayArticles(selectedNewspaper) {
+        async function displayArticles() {
             console.log("Articles are generated");
             const articlesContainer = document.getElementById("articles-container");
             articlesContainer.innerHTML = ""; // Leere den Container
-
+            model = document.getElementById("model").value;
+            selectedNewspaper=document.getElementById('newspaper').value;
             try {
-                const response = await fetch(`/get_articles?newspaper=${selectedNewspaper}`);
+                const response = await fetch(`/get_articles?newspaper=${selectedNewspaper}&model=${model}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -186,6 +187,37 @@
                 articlesContainer.innerHTML = "<p>Error loading articles.</p>";
             }
         }
+        function updateModelOptions() {
+            const newspaperSelect = document.getElementById("newspaper");
+            const modelSelect = document.getElementById("model");
+
+            // Speichere den aktuellen Wert des Modells
+            const currentModelValue = modelSelect.value;
+
+            // Leere die Modell-Optionen
+            modelSelect.innerHTML = "";
+
+            if (newspaperSelect.value === "Volksstimme") {
+                // Füge das feinabgestimmte Modell und Gemini 2.0 Flash hinzu
+                modelSelect.innerHTML = `
+                    <option value="fine tuned model">Fine Tuned Model</option>
+                    <option value="Gemini 2.0 Flash">Gemini 2.0 Flash - rechts</option>
+                `;
+
+                // Stelle den vorherigen Wert wieder her, falls er vorhanden war
+                if (currentModelValue === "fine tuned model" || currentModelValue === "Gemini 2.0 Flash") {
+                    modelSelect.value = currentModelValue;
+                }
+            } else {
+                // Füge nur Gemini 2.0 Flash hinzu
+                modelSelect.innerHTML = `
+                    <option value="Gemini 2.0 Flash">Gemini 2.0 Flash - rechts</option>
+                `;
+
+                // Stelle sicher, dass das Modell auf Gemini 2.0 Flash eingestellt ist
+                modelSelect.value = "Gemini 2.0 Flash";
+            }
+        }
 
         async function initializePage() {
             console.log("Page initialised")
@@ -196,9 +228,11 @@
                 console.error("Initialization error:", error);
             }
         }
-
+    // Füge einen Event-Listener hinzu, um die Modelloptionen zu aktualisieren, wenn die Zeitung geändert wird
+    document.getElementById("newspaper").addEventListener("change", updateModelOptions);
     document.addEventListener('DOMContentLoaded', initializePage);
     document.getElementById("newspaper").addEventListener("change", generateTopics);
+    document.getElementById("model").addEventListener("change", displayArticles);
     
     // Show disclaimer modal on page load if not already accepted in the current session
     window.onload = function() {

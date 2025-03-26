@@ -508,6 +508,7 @@ def get_latest_topics():
 @app.route('/get_articles')
 def get_articles():
     newspaper = request.args.get('newspaper')
+    model = request.args.get('model')
     generated_topics_collection = connect_to_mongodb('generated_topics')
     homepage_collection = connect_to_mongodb('tagesschau homepages')
     newspaper_collection = connect_to_mongodb('NewspaperMeta')
@@ -535,9 +536,11 @@ def get_articles():
             context = " ".join([homepage_chunks[idx] for idx, _ in top_chunks])
             prompt = (f"Basierend auf dem Thema '{topic}' und dem folgenden Kontext {context}. " 
                      f"Die Zeitung '{zeitung['Name']}' hat das Motto {zeitung['Motto']} und folgenden Hintergrund: {zeitung['Hintergrund']}. " 
-                     f"Der Artikel soll im folgenden Stil verfasst sein: {zeitung['Stil']}. Wenn es zum Stil passt verwnede gefälschte Zitate von bekannten oder fiktiven autoriäten wie proffesoren oder andren seriösen figuren um dem Artikel mehr Schwung zu verleiten")
-            article_content = send_request(prompt)
-            # Generate article prompt with fake citations
+                     f"Der Artikel soll im folgenden Stil verfasst sein: {zeitung['Stil']}. Wenn es zum Stil passt denk dir Zitate von bekannten oder fiktiven autoriäten, wie proffesoren oder andren seriösen figuren, aus um dem Artikel mehr Schwung zu verleiten")
+            if model == "Gemini 2.0 Flash":
+                article_content = send_request(prompt)
+            elif model == "fineTunedModel":
+                article_content = send_request_fine_tuned(prompt)
             
             if article_content:
                 articles_list.append({
@@ -545,7 +548,7 @@ def get_articles():
                     "title": topic,
                     "content": article_content
                 })
-                save_topic_article(article_content,topic)
+                save_topic_article(article_content,topic,model)
         else:
             articles_list.append({
                 "title": topic,

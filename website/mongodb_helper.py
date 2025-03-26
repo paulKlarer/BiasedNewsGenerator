@@ -55,7 +55,7 @@ def save_topics(topics_dict):
     }
     topics_collection.insert_one(article_data)
 
-def save_topic_article(article, topic):
+def save_topic_article(article, topic,model):
     """
     Speichert generierte Artikel mit mehr als 500 Wörtern in der MongoDB-Collection.
     """
@@ -63,6 +63,7 @@ def save_topic_article(article, topic):
         topics_collection = connect_to_mongodb('generated_topic_articles')
         article_data = {
             "timestamp": datetime.datetime.utcnow(),
+            "model":model,
             "topic": topic,
             "article": article
         }
