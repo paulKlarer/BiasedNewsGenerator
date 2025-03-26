@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>News Generator</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body class="news-generator-page">
     
@@ -43,7 +44,7 @@
         <!-- Top 3 Topics Grid -->
         <div class="container news-generator-container">
             <h2>Themen des Tages</h2>
-            <div class="news-topics-grid" id="topics-container">/div>
+            <div class="news-topics-grid" id="topics-container"></div>
         </div>
 
         <div class="container news-generator-container">
@@ -65,7 +66,6 @@
             <button class="btn" onclick="closeModal()">Understood</button>
         </div>
     </div>
-    
     <script>
         function closeModal() {
             document.getElementById("disclaimer-modal").style.display = "none";
@@ -153,6 +153,7 @@
         }
         
         async function displayArticles(selectedNewspaper) {
+            console.log("Articles are generated");
             const articlesContainer = document.getElementById("articles-container");
             articlesContainer.innerHTML = ""; // Leere den Container
 
@@ -166,10 +167,11 @@
                 if (articles && Array.isArray(articles) && articles.length === 3) {
                     articles.forEach(article => {
                         const articleElement = document.createElement("div");
-                        articleElement.className = "news-article-box";
+                        articleElement.className = "news-article-box"; // Wichtig für das Styling
+                        htmlContent = marked.parse(article.content);
                         articleElement.innerHTML = `
                             <h3>${article.title}</h3>
-                            <p>${article.content}</p>
+                            ${htmlContent}
                         `;
                         articlesContainer.appendChild(articleElement);
                     });
@@ -192,8 +194,10 @@
             }
         }
 
-    document.addEventListener('DOMContentLoaded', initializePage);
-    document.getElementById("newspaper").addEventListener("change", generateTopics);
+        document.addEventListener('DOMContentLoaded', async () => {
+        await initializePage();
+        document.getElementById("newspaper").addEventListener("change", generateTopics);
+    });
 
     </script>
 </body>

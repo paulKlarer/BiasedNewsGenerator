@@ -541,15 +541,16 @@
   background-color: #bebed8;
 }
 .news-articles-grid {
-  display: flex; /* Verwende Flexbox für die Anordnung */
-  flex-direction: column; /* Ordne die Artikel in einer Spalte an */
-  gap: 20px; /* Abstand zwischen den Artikeln */
-  margin-top: 20px; /* Abstand zum Themenraster */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .news-article-box {
   border: 1px solid #ddd;
   padding: 20px;
+  background-color: white; /* Fügt weißen Hintergrund hinzu */
 }
 
 .news-article-box h3 {
