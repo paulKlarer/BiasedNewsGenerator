@@ -1,6 +1,7 @@
 import datetime
 from flask import Flask, jsonify, request,send_from_directory
 import requests
+from requests.auth import HTTPBasicAuth
 import re
 from bs4 import BeautifulSoup
 import os
@@ -133,7 +134,6 @@ def get_top_10_tagesschau_news():
         logging.error(f"Status code error: {response.status_code}")
         return []
     
-    
     try:
         data = response.json()
     except ValueError:
@@ -196,9 +196,36 @@ def generate_news_article(base_prompt, model_choice, options):
         base_prompt += (
             "\n\nHinweis: Bitte baue am Ende des Artikels einen klaren Call-to-Action ein. Dieser soll den Leser dazu ermutigen, eine konkrete Aktion, passend zum Inhalt und politisch rechts, durchzuführen."
         )
-
-    result = send_request(base_prompt)
+    if model_choice == "Gemini 2.0 Flash":
+        result = send_request(base_prompt)
+    elif model_choice == "fine tuned model":
+        result = send_request_fine_tuned(base_prompt)
     return result
+
+def send_request_fine_tuned(prompt):
+    """
+    Sends a POST request to the finetuned FastAPI model (test1.py) running at port 8000.
+    """
+    url = os.getenv("FINETUNED_MODEL_URL")
+
+    user = os.getenv("API_USER")
+
+    password = os.getenv("API_PASSWORD")
+    try:
+        resp = requests.post(
+            url,
+            json={"prompt": prompt},
+            auth=HTTPBasicAuth(user, password),
+            timeout=120
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("response", "No 'response' in JSON")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error calling finetuned model API: {e}")
+        return None
+    
+    
 
 def send_request(prompt, model_name = "gemini-2.0-flash"):
     """
@@ -219,13 +246,13 @@ def send_request(prompt, model_name = "gemini-2.0-flash"):
     }
     
     try:
-            response = requests.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            result = response.json()
-            return result['candidates'][0]['content']['parts'][0]['text']
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        return result['candidates'][0]['content']['parts'][0]['text']
     except requests.exceptions.RequestException as e:
-            logging.error(f"API request error in send_request: {e}")
-            return None
+        logging.error(f"API request error in send_request: {e}")
+        return None
         
     
 

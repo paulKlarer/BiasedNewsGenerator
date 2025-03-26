@@ -60,17 +60,20 @@
     <!-- Disclaimer Modal -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Disclaimer</h2>
-            <p>This news generator creates AI-generated articles. Please verify information before sharing.</p>
-            <button class="btn" onclick="closeModal()">Understood</button>
+          <h2>Disclaimer</h2>
+          <p>
+            Diese Website ist Teil eines universitären Projekts. Wir distanzieren uns von sämtlichen Falschmeldungen, 
+            die mit diesem Tool erzeugt werden. Die generierten Inhalte dienen ausschließlich Forschungszwecken und 
+            dürfen weder veröffentlicht noch in realen Kontexten verwendet werden.
+            <br><br> 
+            This website is part of a university project. We distance ourselves from any fake news generated using this tool. 
+            The content generated is purely for research purposes and should not be published or used in any real-world context.
+          </p>
+          <button id="close-disclaimer" class="btn">I Understand</button>
         </div>
-    </div>
+      </div>
+    
     <script>
-        function closeModal() {
-            document.getElementById("disclaimer-modal").style.display = "none";
-        }
-        
         async function fetchHomepageNews() {
             console.log("attempting to get homepage");
             try {
@@ -194,11 +197,23 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-        await initializePage();
-        document.getElementById("newspaper").addEventListener("change", generateTopics);
-    });
+    document.addEventListener('DOMContentLoaded', initializePage);
+    document.getElementById("newspaper").addEventListener("change", generateTopics);
+    
+    // Show disclaimer modal on page load if not already accepted in the current session
+    window.onload = function() {
+      const disclaimerModal = document.getElementById('disclaimer-modal');
+      const disclaimerAccepted = sessionStorage.getItem('disclaimerAccepted');
 
+      if (!disclaimerAccepted) {
+        disclaimerModal.style.display = 'block';
+
+        document.getElementById('close-disclaimer').addEventListener('click', function() {
+          disclaimerModal.style.display = 'none';
+          sessionStorage.setItem('disclaimerAccepted', 'true');
+        });
+      }
+    };
     </script>
 </body>
 </html>
