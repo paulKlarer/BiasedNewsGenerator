@@ -13,6 +13,9 @@ def connect_to_mongodb(COLLECTION_NAME):
     client = MongoClient(mongo_url)
     db = client['MLAI']
     articles_collection = db[COLLECTION_NAME]
+    #rint(f"Connected to MongoDB collection: {COLLECTION_NAME}")
+    #make some cheeck if we can reach the db
+    #print(f'database connection status{db.client}')
     return articles_collection
 
 def save_article(article_text, model_choice, generated_text):
@@ -79,7 +82,14 @@ def get_generated_articles():
     articles_collection = connect_to_mongodb('gen_articles')
     generated_articles = articles_collection.find({"generated_text": {"$exists": True}})
     return list(generated_articles)
-
+#write a method to get all objects from the collection gen_articles
+def get_all_generated_articles():
+    """
+    Fetch all generated articles from the MongoDB collection.
+    """
+    articles_collection = connect_to_mongodb('gen_articles')
+    generated_articles = articles_collection.find()
+    return list(generated_articles)
 def get_normal_articles():
     """
     Fetch all normal articles from the MongoDB collection.

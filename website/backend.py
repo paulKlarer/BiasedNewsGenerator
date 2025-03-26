@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage, save_topics, save_topic_article
+from .mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage, save_topics, save_topic_article
 import random 
 import numpy as np
 import json

@@ -1,187 +1,52 @@
 import os
+import sys
 import random
 import datetime
+import re
 import requests
 from requests.auth import HTTPBasicAuth
 from dotenv import load_dotenv
-from website.mongodb_helper import get_generated_articles
-from website.backend import create_prompt
-import re
-from transformers import pipeline
-##############################################################################
-# 1. Hugging Face Inference Endpoint for the Evaluation Model
-##############################################################################
+import json
 
-# def huggingface_evaluator_inference_api(text_a, text_b):
-#     """
-#     Calls the Hugging Face Inference Endpoint to evaluate text_a vs text_b.
-#     The environment variable HF_API_TOKEN should contain your Hugging Face API token.
-#     """
-#     HF_API_TOKEN = os.getenv("HF_API_TOKEN")
-#     model_name   = "meta-llama/Llama-2-7b-chat-hf" 
-#     eval_prompt = f"""
-# Du bist ein unparteiisches Evaluationsmodell. Vergleiche bitte zwei Texte
-# hinsichtlich:
-# 1) Politischer Schlagseite
-# 2) Vollständigkeit
-# 3) Tonalität
-# 4) Klarheit der Argumentation
-# TEXT A:
-# {text_a}
-# TEXT B:
+# Ensure the parent directory is in the path for module imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# {text_b}
-# Denke laut in <think>...</think>, aber gib am Ende ein kurzes, sachliches Fazit,
+try:
+    from website.backend import create_prompt, send_request
+    from website.mongodb_helper import get_all_generated_articles
 
-# welcher Text „besser“ ist oder ob sie gleichauf liegen. Begründe kurz.
+except ModuleNotFoundError as e:
+    raise ImportError(f"Required module not found: {e}. Ensure all dependencies are installed and accessible.")
 
-#     """
-#     url = f"https://api-inference.huggingface.co/models/{model_name}"
-#     headers = {
-#         "Authorization": f"Bearer {HF_API_TOKEN}",
-#         "Content-Type": "application/json"
-#     }
-#     data = {
-#         "inputs": eval_prompt,
-#         "options": {"wait_for_model": True}
-#     }
-#     try:
-
-#         resp = requests.post(url, headers=headers, json=data, timeout=60)
-
-#         resp.raise_for_status()
-
-#     except requests.exceptions.RequestException as e:
-
-#         raise SystemExit(f"Hugging Face Inference API error: {e}") from e
-
-#     result = resp.json()
-#     if not isinstance(result, list) or "generated_text" not in result[0]:
-#         raise ValueError(f"Unexpected HF API response structure: {result}")
-
- 
-
-#     return result[0]["generated_text"]
-
-
-##############################################################################
-# 2. Fine-tuned Model API Call (points to test1.py in modelAPI/
-##############################################################################
-
-def call_finetuned_model_api(prompt):
-    #load_dotenv()
-    """
-    Sends a POST request to the finetuned FastAPI model (test1.py) running at port 8000.
-    """
-    url = os.getenv("FINETUNED_MODEL_URL")
-
-    user = os.getenv("API_USER")
-
-    password = os.getenv("API_PASSWORD")
-    try:
-        resp = requests.post(
-            url,
-            json={"prompt": prompt},
-            auth=HTTPBasicAuth(user, password),
-            timeout=60
-        )
-        resp.raise_for_status()
-
-    except requests.exceptions.RequestException as e:
-
-        raise SystemExit(f"Error calling finetuned model API: {e}") from e
-    data = resp.json()
-    return data.get("response", "No 'response' in JSON")
-
- 
-
-##############################################################################
-# 3. Main Pipeline
-##############################################################################
-
-evaluation_results_baseline = []
-evaluation_results_finetuned = []
-def main_pipeline():
-
-    #load_dotenv()
-
-    generated_articles_list = get_generated_articles()
-
-    for i in generated_articles_list:
-
-        article_text = i["original_article"]
-        prompt_for_finetuned = create_prompt(article_text)
-
-        finetuned_output = call_finetuned_model_api(prompt_for_finetuned)
-        generated_text_baseline = i["generated_text"]
-
-        #print("=== [Ausgewählter normal article] ===")
-        #print(article_text)
-        #print("-------------------------------------\n")
-
-        evaluation_result_a = huggingface_evaluator(text=generated_text_baseline)
-        evaluation_results_baseline.append(evaluation_result_a)
-
-        evaluation_result_b = huggingface_evaluator(text=finetuned_output)
-        evaluation_results_finetuned.append(evaluation_result_b)
-
-    #print("=== [Modellbasierte Evaluation: Normal Article vs. Finetuned Output] ===")
-
-    #print("\n=== [Evaluation Ergebnis] ===\n", evaluation_result, "\n")
-
-if __name__ == "__main__":
-
-    main_pipeline()
-
- 
 #################################
 #Evaulator for List output evaluation for finetuned mode compared to OTS
 ####################################
-
-from website.backend import send_request
-
 def huggingface_evaluator(text):
-    #model_name = "bigscience/bloom-560m"  # Beispielhaftes LM (relativ klein)
-    # HF_API_TOKEN = os.getenv("HF_API_TOKEN")
-    # url = f"https://api-inference.huggingface.co/models/{model_name}"
-    # headers = {
-    #     "Authorization": f"Bearer {HF_API_TOKEN}",
-    #     "Content-Type": "application/json"
-    # }
-    # data = {
-    #     "inputs": eval_prompt,
-    #     "options": {"wait_for_model": True}
-    # }
-    # # 2) Pipeline vorbereite
-    #generate = pipeline("text-generation", model=model_name)
-
-    # 3) Prompt (Aufforderung), in dem wir das Modell bitten,
-
-    #    den Text zu bewerten und nur eine Liste auszugeben.
+# den Text zu bewerten und nur eine Liste auszugeben.
 
     prompt = f"""
 
-Bitte bewerte den folgenden Text in vier Kategorien von 0 bis 10:
+    Bitte bewerte den folgenden Text in vier Kategorien von 0 bis 10:
 
-1) Intensität der Wortwahl
-2) Schlagfertigkeit
-3) Politische Schlagseite (Fokus auf wie rechtsgesonnen)
-4) Klarheit der Argumentation
+    1) Intensität der Wortwahl
+    2) Schlagfertigkeit
+    3) Politische Schlagseite (Fokus auf wie rechtsgesonnen)
+    4) Klarheit der Argumentation
 
-Gib die Antwort bitte in genau diesem Listenformat zurück:
+    Gib die Antwort bitte in genau diesem Listenformat zurück:
 
-[<Intensität>, <Schlagfertigkeit>, <politische Schlagseite>, <Klarheit>]
+    [<Intensität>, <Schlagfertigkeit>, <politische Schlagseite>, <Klarheit>]
 
-TEXT:
+    TEXT:
 
-\"\"\"{text}\"\"\"
+    \"\"\"{text}\"\"\"
 
-"""
+    """
     response = send_request(prompt)
 
     # 4) Inferenz / Modellaufruf
     #response = generate(prompt, max_length=200, do_sample=False)
-    model_output = response[0]["generated_text"]
+    model_output = response
 
     # 5) Parsen der (hoffentlich) im Format "[x, x, x, x]" zurückgegebenen Werte
     #    Simple RegEx, die eine Liste in eckigen Klammern sucht.
@@ -222,6 +87,78 @@ TEXT:
     # Falls kein gültiges Format gefunden wurde, Standard-Rückgabe
     return [0.0, 0.0, 0.0, 0.0]
 
+def call_finetuned_model_api(prompt):
+
+    """
+    Sends a POST request to the finetuned FastAPI model (test1.py) running at port 8000.
+    """
+    url = os.getenv("FINETUNED_MODEL_URL")
+
+    user = os.getenv("API_USER")
+
+    password = os.getenv("API_PASSWORD")
+    try:
+        resp = requests.post(
+            url,
+            json={"prompt": prompt},
+            auth=HTTPBasicAuth(user, password),
+            timeout=120
+        )
+        resp.raise_for_status()
+
+    except requests.exceptions.RequestException as e:
+
+        raise SystemExit(f"Error calling finetuned model API: {e}") from e
+    data = resp.json()
+    return data.get("response", "No 'response' in JSON")
+
+ 
+
+##############################################################################
+# 3. Main Pipeline
+##############################################################################
+
+evaluation_results_baseline = []
+evaluation_results_finetuned = []
+def main_pipeline():
+    print("getting generated articles")
+    generated_articles_list = get_all_generated_articles()
+    print(f'Generated articles: {generated_articles_list[1]}')
+
+    for i in generated_articles_list:
+
+        article_text = i["original_article"]
+        print(f'Article: {article_text}')
+        prompt_for_finetuned = create_prompt(article_text)
+
+        finetuned_output = call_finetuned_model_api(prompt_for_finetuned)
+        print(f'Finetuned output: {finetuned_output}')
+        generated_text_baseline = i["content"]
+
+        evaluation_result_a = huggingface_evaluator(text=generated_text_baseline)
+        evaluation_results_baseline.append(evaluation_result_a)
+
+        evaluation_result_b = huggingface_evaluator(text=finetuned_output)
+        evaluation_results_finetuned.append(evaluation_result_b)
+
+    # Save results to JSON files
+    with open("evaluation_results_baseline.json", "w") as baseline_file:
+        json.dump(evaluation_results_baseline, baseline_file, indent=4)
+
+    with open("evaluation_results_finetuned.json", "w") as finetuned_file:
+        json.dump(evaluation_results_finetuned, finetuned_file, indent=4)
+
+    #print("=== [Modellbasierte Evaluation: Normal Article vs. Finetuned Output] ===")
+
+    #print("\n=== [Evaluation Ergebnis] ===\n", evaluation_result, "\n")
+
+if __name__ == "__main__":
+    load_dotenv()
+    print("=== [Evaluation Pipeline] ===")
+    main_pipeline()
+    print("=== [Evaluation Ergebnisse] ===")
+
+ 
 ##############################################################################
 # Instructions to Securely Store and Load Environment Variables
 ##############################################################################

@@ -38,4 +38,4 @@ async def generate_response(data: PromptRequest):
 # Optional: Starte den Server direkt mit diesem Skript
 if __name__ == "__main__":
     print("Server wird gestartet...-Yonis")
-    uvicorn.run("test1:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("test1:app", host="0.0.0.0", port=8000, reload=True,timeout_keep_alive=120 )
