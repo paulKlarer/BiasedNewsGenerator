@@ -7,10 +7,11 @@ import os
 from dotenv import load_dotenv
 import logging
 from flask_cors import CORS
-from .mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage, save_topics, save_topic_article
+from mongodb_helper import save_article, get_random_generated_article, get_random_normal_article, save_evaluation_data, connect_to_mongodb, save_homepage, save_topics, save_topic_article
 import random 
 import numpy as np
 import json
+import re
 
 load_dotenv()
 
@@ -221,12 +222,12 @@ def send_request(prompt, model_name = "gemini-2.0-flash"):
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
-            generated_text = result['candidates'][0]['content']['parts'][0]['text']
+            return result['candidates'][0]['content']['parts'][0]['text']
     except requests.exceptions.RequestException as e:
             logging.error(f"API request error in send_request: {e}")
             return None
         
-    return generated_text
+    
 
 def get_api_key():
     load_dotenv()  # Ensure environment variables are loaded.
@@ -276,24 +277,44 @@ def api_generate():
     
     return jsonify({"generated_text": generated_text})
 
-def extract_array_content_with_brackets(input_string):
+def extract_and_clean_json_array(input_string):
     """
-    Extrahiert den Inhalt einschließlich der eckigen Klammern '[' und ']' aus einem String.
+    Extrahiert und bereinigt ein JSON-Array aus einem String.
 
     Args:
         input_string (str): Der Eingabestring.
 
     Returns:
-        str: Der extrahierte Inhalt einschließlich der eckigen Klammern oder None, wenn kein gültiger Inhalt gefunden wird.
+        str: Das extrahierte und bereinigte JSON-Array oder None, wenn kein gültiger Inhalt gefunden wird.
     """
-    try:
-        start_index = input_string.index('[')
-        end_index = input_string.index(']')
+    if not input_string:
+        return None
 
-        extracted_content = input_string[start_index:end_index + 1] # +1 um das ] mit einzubeziehen
-        return extracted_content.strip()
-    except ValueError:
-        return None  # Kein gültiger Inhalt gefunden
+    # Entferne störende Zeichen am Anfang und Ende
+    input_string = input_string.strip(' \n\t"\'')
+
+    # Füge Klammern hinzu, wenn sie fehlen
+    if '[' not in input_string:
+        input_string = '[' + input_string
+    if ']' not in input_string:
+        input_string = input_string + ']'
+
+    # Entferne störende Zeichen innerhalb des Strings
+    input_string = re.sub(r'[^\x20-\x7E\[\],äöüÄÖÜß]', '', input_string)  # Entfernt nicht-druckbare ASCII-Zeichen, außer [,] und die deutschen Umlaute 
+
+    # Versuche, das Ergebnis als JSON zu parsen
+    try:
+        json.loads(input_string)  # Überprüft, ob es gültiges JSON ist
+        return input_string
+    except (ValueError, json.JSONDecodeError):
+        # Ursprüngliche Logik anwenden, wenn JSON-Parsen fehlschlägt
+        try:
+            start_index = input_string.index('[')
+            end_index = input_string.index(']')
+            extracted_content = input_string[start_index:end_index + 1]  # +1 um das ] mit einzubeziehen
+            return extracted_content.strip()
+        except ValueError:
+            return None  # Kein gültiger Inhalt gefunden
 
 def chooseTopics(homepage, zeitungen):
     """
@@ -308,12 +329,19 @@ def chooseTopics(homepage, zeitungen):
           f"Wähle diese Themen aus der folgenden Liste aus: {'; '.join(titles)}. "
           f"Berücksichtige dabei das Motto der Zeitung: '{z['Motto']}' und ihre Schwerpunktthemen: {z['Themen']}. "
           f"Gib nur das JSON-Array im folgenden Format zurück: [Thema 1, Thema 2, Thema 3].")
-        print(prompt)
         response = send_request(prompt)
-        response= extract_array_content_with_brackets(response)
-        topics_dict[z['Name']] = response
-
-    return topics_dict
+        if response: # überprüfe auf None
+            response= extract_and_clean_json_array(response)
+            if response:
+                try:
+                    topics_dict[z['Name']] = json.loads(response)
+                except (ValueError, json.JSONDecodeError):
+                    topics_dict[z['Name']] = ['Fehler beim JSON encoden in Choose Homepage'] 
+            else:
+                topics_dict[z['Name']] = ['Fehler beim JSON encoden in extract_and_clean_json_array'] 
+        else:
+            topics_dict[z['Name']] = ['None als repsonse von api call bekommen']
+    return topics_dict 
 
 @app.route('/generate_topics', methods=['GET'])
 def generate_topics():
@@ -327,11 +355,8 @@ def generate_topics():
     time_difference = datetime.datetime.utcnow() - last_timestamp
 
     if time_difference < datetime.timedelta(hours=1):
-        # Wandle ObjectId in String um
-            latest_topic['_id'] = str(latest_topic['_id'])
-            # Wandle timestamp in String um wenn nötig
-            latest_topic['timestamp'] = str(latest_topic['timestamp'])
-            return jsonify(latest_topic)
+        topics = latest_topic['topics']
+        return topics
     else:
         try:
             # Fetch the latest homepage news
@@ -358,11 +383,12 @@ def generate_topics():
             # Save topics to MongoDB
             save_topics(topics_dict)
 
-            return jsonify(topics_dict)
+            return topics_dict
 
         except Exception as e:
             print(f"Error: {e}") #debugging print
             return jsonify({"error": str(e)}), 500
+        
 
 def chunk_text(text: str, chunk_size=500):
     words = text.split()
@@ -464,7 +490,7 @@ def get_articles():
     zeitung = newspaper_collection.find_one({"Name": newspaper})
 
     articles_list = []
-    for topic in json.loads(latest_topics): #load the string into a json array.
+    for topic in latest_topics: #load the string into a json array.
         # Embed topic and homepage content
         topic_embedding = get_google_embedding(topic)
         # Chunk homepage content
