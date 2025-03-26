@@ -126,27 +126,25 @@
         function displayTopics(topicsData,selectedNewspaper) {
             const topicsContainer = document.getElementById("topics-container");
             topicsContainer.innerHTML = "";
-
             if (topicsData && topicsData[selectedNewspaper]) {
                 let topics = topicsData[selectedNewspaper];
-                console.log(topics)
+                console.log(topics);
+
                 try {
-                    // Versuche, den String in ein Array umzuwandeln
-                    topics = topics.replace(/[\n\r]/g, "").replace(/\\/g, ''); // Entferne Zeilenumbrüche und Backslashes
-                    topics = JSON.parse(topics);
+                    // Entferne Zeilenumbrüche und Backslashes (falls erforderlich)
+
+                    if (Array.isArray(topics)) {
+                        const topicElement = document.createElement("div");
+                        topicElement.className = "news-topic-box";
+                        topicElement.innerHTML = `<h3>${selectedNewspaper}</h3><ul>${topics.map(topic => `<li>${topic}</li>`).join('')}</ul>`;
+                        topicsContainer.appendChild(topicElement);
+                    } else {
+                        console.error(`Topics for ${selectedNewspaper} are not an array:`, topics);
+                        topicsContainer.innerHTML = `<p>Topics could not be loaded for ${selectedNewspaper}.</p>`;
+                    }
                 } catch (error) {
-                    console.error(`Error parsing topics for ${selectedNewspaper}:`, error);
+                    console.error(`Error processing topics for ${selectedNewspaper}:`, error);
                     topicsContainer.innerHTML = `<p>Error loading topics for ${selectedNewspaper}.</p>`;
-                    return; // Beende die Funktion, wenn ein Fehler auftritt
-                }
-                if (Array.isArray(topics)) {
-                    const topicElement = document.createElement("div");
-                    topicElement.className = "news-topic-box";
-                    topicElement.innerHTML = `<h3>${selectedNewspaper}</h3><ul>${topics.map(topic => `<li>${topic}</li>`).join('')}</ul>`;
-                    topicsContainer.appendChild(topicElement);
-                } else {
-                    console.error(`Topics for ${selectedNewspaper} are not an array:`, topics);
-                    topicsContainer.innerHTML = `<p>Topics could not be loaded for ${selectedNewspaper}.</p>`;
                 }
             } else {
                 topicsContainer.innerHTML = `<p>No topics found for ${selectedNewspaper}.</p>`;

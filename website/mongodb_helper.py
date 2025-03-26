@@ -57,15 +57,20 @@ def save_topics(topics_dict):
 
 def save_topic_article(article, topic):
     """
-    Speichert die generierten Themen in der MongoDB-Collection.
+    Speichert generierte Artikel mit mehr als 500 Wörtern in der MongoDB-Collection.
     """
-    topics_collection = connect_to_mongodb('generated_topic_articles')
-    article_data = {
-        "timestamp": datetime.datetime.utcnow(),
-        "topic": topic,
-        "article":article
-    }
-    topics_collection.insert_one(article_data)
+    if len(article.split()) >= 500:  # Überprüft, ob der Artikel mindestens 500 Wörter hat
+        topics_collection = connect_to_mongodb('generated_topic_articles')
+        article_data = {
+            "timestamp": datetime.datetime.utcnow(),
+            "topic": topic,
+            "article": article
+        }
+        topics_collection.insert_one(article_data)
+        print(f"Artikel mit Thema '{topic}' wurde erfolgreich gespeichert.")
+    else:
+        print(f"Artikel mit Thema '{topic}' ist zu kurz und wurde nicht gespeichert.")
+
 
 def save_evaluation_data(evaluation_data):
     """
