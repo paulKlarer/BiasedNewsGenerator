@@ -166,7 +166,7 @@ def create_prompt(text_input):
     """
     # Base prompt
     base_prompt = (
-        "Fasse den folgenden Text prägnant zusammen, sodass die Zusammenfassung grammatikalisch "
+        "Fasse den folgenden Text prägnant in deutscher Sprache zusammen, sodass die Zusammenfassung grammatikalisch "
         "korrekt direkt an den Satz 'Generiere einen politisch rechten Artikel über' anschließt. "
         "Die Zusammenfassung soll keinen einleitenden Satz enthalten, sondern direkt mit dem Thema beginnen: "
         + text_input
