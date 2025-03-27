@@ -27,3 +27,8 @@ Our fine-tuned model has been trained on several hundred articles collected from
 ## Backend & Frontend
 
 [website](https://github.com/paulKlarer/BiasedNewsGenerator/tree/main/website)
+
+## Presentation
+[Presentation](https://hsludwigshafen-my.sharepoint.com/:p:/g/personal/luag550_hwg-lu_de/EcGf6XJpxT5PowFc8WKG-4oBhbUtEb2m8yaN5U482COocQ?e=o69a5r)  
+**Important**  
+The first part of this presentation is purely fictional and not based on real events
