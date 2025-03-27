@@ -59,7 +59,7 @@ def save_topic_article(article, topic,model):
     """
     Speichert generierte Artikel mit mehr als 500 Wörtern in der MongoDB-Collection.
     """
-    if len(article.split()) >= 300:  # Überprüft, ob der Artikel mindestens 500 Wörter hat
+    if len(article.split()) >= 250:  # Überprüft, ob der Artikel mindestens 250 Wörter hat
         topics_collection = connect_to_mongodb('generated_topic_articles')
         article_data = {
             "timestamp": datetime.datetime.utcnow(),
