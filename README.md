@@ -25,7 +25,7 @@ Our fine-tuned model has been trained on several hundred articles collected from
 
 ## Finetuning
 
-[Finetuning](https://github.com/paulKlarer/BiasedNewsGenerator/blob/modelFineTuningColab/nb/Llama3_(8B)-Ollama.ipynb)
+[Finetuning](https://github.com/paulKlarer/BiasedNewsGenerator/blob/main/nb/Llama3_(8B)-Ollama.ipynb)
 
 ## Evaluation
 Due to some issue with the packages. When running the evaluation/pipeline.py, add in website/backend.py infront of the import of mongo_db_helper a dot. It should then look like this "from .mongo_db_helper import ..."
