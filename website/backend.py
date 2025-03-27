@@ -220,11 +220,12 @@ def send_request_fine_tuned(prompt):
         )
         resp.raise_for_status()
         data = resp.json()
-        # Entferne den Prompt aus der Antwort
+        
+        data = data.get("response", "No 'response' in JSON")
         think_pattern = re.compile(r'.*?</think>', re.DOTALL)
         data = re.sub(think_pattern, '', data).strip()
 
-        return data.get("response", "No 'response' in JSON")
+        return data
     except requests.exceptions.RequestException as e:
         logging.error(f"Error calling finetuned model API: {e}")
         return None
