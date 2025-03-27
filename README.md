@@ -7,7 +7,7 @@ The goal of the project was to learn about LLM fine tuning and raise attention f
 
 # BiasedNewsGenerator
 
-## Webiste
+## Website
 [Demo](https://fakenewsgenerator.onrender.com/)
 
 ## Overview
