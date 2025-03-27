@@ -25,6 +25,8 @@ Our fine-tuned model has been trained on several hundred articles collected from
 
 ## Finetuning
 
+[Finetuning](https://github.com/paulKlarer/BiasedNewsGenerator/tree/modelFineTuningColab)
+
 ## Evaluation
 
 [evaluation](https://github.com/paulKlarer/BiasedNewsGenerator/tree/main/evaluation)
