@@ -3,6 +3,8 @@
 **This project is part of a university project. We distance ourselves from any fake news generated using this tool. 
 The content generated is purely for research purposes and should not be published or used in any real-world context.**
 
+The Goal of the project was to learn about LLM fine tuning and raise attention for fake news.
+
 # BiasedNewsGenerator
 
 ## Overview
