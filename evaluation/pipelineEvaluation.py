@@ -24,38 +24,6 @@ except ModuleNotFoundError as e:
 # 1) Funktion zum Bereinigen des Finetuned-Outputs
 #################################
 def clean_finetuned_output(full_output: str) -> str:
-    # match_json = re.search(r'Antwort auf deinen Prompt:\s*["\'](.*)["\']', full_output, flags=re.DOTALL)
-    # if not match_json:
-    #     # Falls das nicht gefunden wird, einfach den gesamten String zurückgeben
-    #     # (bzw. leeren String, je nach Bedarf)
-    #     return full_output.strip()
-    
-    # json_str = match_json.group(1)
-
-    # # 2) JSON parsen und an "response" gelangen
-    # try:
-    #     data = json.loads(json_str)
-    #     response_text = data.get("response", "")
-    # except json.JSONDecodeError:
-    #     # Falls das JSON fehlerhaft ist, geben wir den kompletten originalen String zurück
-    #     return full_output.strip()
-
-    # # 3) Abtrennen des <think> Blocks:
-    # #    Wir nehmen alles nach dem letzten '</think>'.
-    # #    Falls du immer nur einen <think>-Block hast, reicht split(..., 1).
-    # #    Aber wenn du sicher gehen willst, dass ALLES bis zum letzten '</think>'
-    # #    entfernt wird, kannst du rsplit(..., 1) benutzen.
-    # parts = response_text.rsplit("</think>", 1)
-    # if len(parts) == 2:
-    #     # Alles nach '</think>' ist unser finaler Modelltext
-    #     final_text = parts[1]
-    # else:
-    #     # Falls kein '</think>' gefunden wird, nehmen wir das komplette response
-    #     final_text = response_text
-
-    # # 4) Aufräumen: führende oder trailing Leerzeichen, eventuelle
-    # #    übriggebliebene Anführungszeichen etc.
-    # final_text = final_text.strip()
     last_think_close = full_output.rfind("</think>")
     # Falls kein </think> gefunden wird, wird der Text einfach zurückgegeben
     if last_think_close == -1:
@@ -73,11 +41,22 @@ def clean_finetuned_output(full_output: str) -> str:
     final_text = re.sub(r"\s+", " ", final_text)
     return final_text
 
+#################################
+# 2) Funktion zum Erstellen der gpt4o Based eval
+#################################
+from gen_ai_hub.proxy.native.openai import chat
 
+def gpt4o_based_eval(prompt):
+    #the input promt gets inserted into the template
+    prompt = [{"role": "user", "content": prompt}]
+    kwargs = dict(model_name='gpt-4o', messages=prompt)
+    response = chat.completions.create(**kwargs)
+    sentence = response.choices[0].message.content
+    return sentence
 #################################
-# 2)
+# 3) Funktion zum Bewerten eines Textes 
 #################################
-def huggingface_evaluator(text):
+def LLM_as_a_judge_evaluator(text):
     """
     Bewertet einen Text in vier Kategorien [0..10].
     """
@@ -97,7 +76,9 @@ def huggingface_evaluator(text):
 
     \"\"\"{text}\"\"\"
     """
-    response = send_request(prompt)
+    #old eval with Gemini 2.0 
+    #response = send_request(prompt)
+    response = gpt4o_based_eval(prompt)
     model_output = response
 
     match = re.search(r"\[\s*([^\]]+)\s*\]", model_output)
@@ -118,6 +99,7 @@ def huggingface_evaluator(text):
         return scores
 
     # Fallback: keine Werte gefunden
+    print(f"Keine Werte gefunden in: {model_output}")
     return [0.0, 0.0, 0.0, 0.0]
 
 
@@ -134,7 +116,7 @@ def call_finetuned_model_api(prompt):
             url,
             json={"prompt": prompt},
             auth=HTTPBasicAuth(user, password),
-            timeout=120
+            timeout=240
         )
         resp.raise_for_status()
     except requests.exceptions.RequestException as e:
@@ -175,7 +157,7 @@ def main_pipeline():
         try:
             finetuned_output = call_finetuned_model_api(prompt_for_finetuned)
         except requests.exceptions.ReadTimeout:
-            print("Fehler: Read timed out (read timeout=120). Überspringe diesen Eintrag und fahre fort.")
+            print("Fehler: Read timed out (read timeout=240). Überspringe diesen Eintrag und fahre fort.")
             continue
         except requests.exceptions.RequestException as e:
             print(f"Allgemeiner Request-Fehler: {e}. Überspringe diesen Eintrag und fahre fort.")
@@ -189,20 +171,23 @@ def main_pipeline():
         # Baseline-Text bewerten (falls 'content' existiert)
         if "content" in i:
             generated_text_baseline = i["content"]
-            evaluation_result_a = huggingface_evaluator(text=generated_text_baseline)
+            evaluation_result_a = LLM_as_a_judge_evaluator(text=generated_text_baseline)
             evaluation_results_baseline.append(evaluation_result_a)
         else:
             print("Hinweis: Kein 'content'-Feld vorhanden. Baseline wird nicht bewertet.")
 
         # Finetuned Output bewerten
-        evaluation_result_b = huggingface_evaluator(text=finetuned_output_clean)
+        evaluation_result_b = LLM_as_a_judge_evaluator(text=finetuned_output_clean)
         evaluation_results_finetuned.append(evaluation_result_b)
+        # set max articles
+        if idx >= 30:
+            break
 
     # Ergebnisse speichern
     with open("evaluation_results_baseline.json", "w", encoding="utf-8") as baseline_file:
         json.dump(evaluation_results_baseline, baseline_file, indent=4)
 
-    with open("evaluation_results_finetuned.json", "w", encoding="utf-8") as finetuned_file:
+    with open("evaluation_results_fine-tuned_model-vlj33at.json", "w", encoding="utf-8") as finetuned_file:
         json.dump(evaluation_results_finetuned, finetuned_file, indent=4)
 
 
