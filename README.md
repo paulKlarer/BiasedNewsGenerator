@@ -7,6 +7,9 @@ The goal of the project was to learn about LLM fine tuning and raise attention f
 
 # BiasedNewsGenerator
 
+## Webiste
+[Demo](https://fakenewsgenerator.onrender.com/)
+
 ## Overview
 This project was developed as part of the voluntary course "Machine Learning and AI." We built a pipeline that fetches news from the Tagesschau API and selects a topic, which is then processed by our custom fine-tuned LLM model.
 
